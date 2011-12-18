@@ -30,23 +30,26 @@ var Bankers = {
         }
         if (!n)
             throw "Unable to reach Banker's number without length.";
-        var c = 0, b = 0, e = a;
+        var c = 0, b = [], e = a, i = 0;
         if (a == 0)
-            return 0;
-            
+            return "";
+        
         do {
             e -= Binom.choose(n, c++);
         } while (Binom.choose(n, c) <= a);
-        c--;
-        n--;
-        if (Binom.choose(n, c))
-            b++;
+        if (Binom.choose(n - 1, c--))
+            b[i] = "1";
+        else
+            b[i] = "0";
+        
         while (c >= 0) {
-            if (b % 2 === 0)
-                e -= Binom.choose(n, c);
-            b = b << 1;
-            if (Binom.choose(n-- + 1, c--)) 
-                b++;
+            if (b[i] == "0")
+                e -= Binom.choose(n - i - 1, c);
+            if (Binom.choose(n - i, c) > e) { 
+                b[i++] = "1";
+                c--;
+            } else
+                b[i++] = "0";
         }
         return b;
     },
