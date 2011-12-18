@@ -51,7 +51,11 @@ var Bankers = {
             } else
                 b[i++] = "0";
         }
-        return b;
+        while (i < n) {
+            b[i++] = "0";
+        }
+        
+        return b.join("");
     },
     from: function(b) {
         var bits = b.split("");
