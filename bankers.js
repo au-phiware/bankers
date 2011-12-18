@@ -30,33 +30,40 @@ var Bankers = {
         }
         if (!n)
             throw "Unable to reach Banker's number without length.";
-        var c = 0, b = [], e = a, i = 0;
         if (a == 0) {
-            b = "";
+            var b = "";
             while (n--) b += "0";
             return b;
         }
         
+        var cn = 0, b = [], c = [], e = [a], i = 0;
         do {
-            e -= Binom.choose(n, c++);
-        } while (Binom.choose(n, c) <= e);
-        if (Binom.choose(n - 1, c) > e) {
+            e[0] -= Binom.choose(n, cn++);
+        } while (Binom.choose(n, cn) <= e[0]);
+        if (Binom.choose(n - 1, cn - 1) <= e[i]) {
+            b[i] = "0";
+            c[i] = 0;
+        } else {
             b[i] = "1";
-            c--;
-        } else
-            b[i] = "0";
-        
-        while (c > 0) {
-            if (b[i] == "0")
-                e -= Binom.choose(n - i - 1, c);
-            if (Binom.choose(n - i, c) > e) { 
-                b[++i] = "1";
-                c--;
-            } else
-                b[++i] = "0";
+            c[i] = 1;
         }
-        while (++i < n)
-            b[i] = "0";
+        
+        while (cn > c[i] && i < n - 1) {
+            if (b[i] == "0")
+                e[i+1] = e[i] - Binom.choose(n - i - 1, cn - c[i] - 1);
+            else
+                e[i+1] = e[i];
+            if (e[i+1] === 0 || Binom.choose(n - i - 2, cn - c[i] - 1) > e[i+1]) { 
+                b[i+1] = "1";
+                c[i+1] = c[i] + 1;
+            } else {
+                b[i+1] = "0";
+                c[i+1] = c[i];
+            }
+            i++;
+        }
+        while (i < n - 1)
+            b[++i] = "0";
         
         return b.join("");
     },
