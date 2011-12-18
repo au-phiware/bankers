@@ -8,6 +8,7 @@
         <script type="text/javascript" src="bankers.js"></script>
         <script type="text/javascript">
             $(function() {
+                for (b = "00000000000"; b != "11111111111";) if (Bankers.to(Bankers.from(b = Bankers.next(b)), b.length) != b) throw "Fail: " + b;
                 alert("Move along, nothing to see.");
             });
         </script>
