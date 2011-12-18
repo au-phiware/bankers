@@ -31,8 +31,11 @@ var Bankers = {
         if (!n)
             throw "Unable to reach Banker's number without length.";
         var c = 0, b = [], e = a, i = 0;
-        if (a == 0)
-            return "";
+        if (a == 0) {
+            b = "";
+            while (n--) b += "0";
+            return b;
+        }
         
         do {
             e -= Binom.choose(n, c++);
