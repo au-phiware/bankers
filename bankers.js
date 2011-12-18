@@ -28,30 +28,31 @@ var Bankers = {
             n = n || a.length;
             a = parseInt(a, 2);
         }
-        var c = 0, b = 0, e = 0;
+        if (!n)
+            throw "Unable to reach Banker's number without length.";
+        var c = 0, b = 0, e = a;
         if (a == 0)
             return 0;
             
         do {
-            a -= Binom.choose(n, c++);
+            e -= Binom.choose(n, c++);
         } while (Binom.choose(n, c) <= a);
         c--;
-        e = a;
         n--;
         if (Binom.choose(n, c))
             b++;
-        while (c-- >= 0) {
+        while (c >= 0) {
             if (b % 2 === 0)
                 e -= Binom.choose(n, c);
             b = b << 1;
-            if (Binom.choose(n-- + 1, c)) 
+            if (Binom.choose(n-- + 1, c--)) 
                 b++;
         }
         return b;
     },
     from: function(b) {
         var bits = b.split("");
-        var n = b.length, a = 0, c = 0, cn = b.match(/1/g).length;
+        var n = b.length, a = 0, c = 0, cn = (b.match(/1/g) || []).length;
         for (var i = 0; i < bits.length && c < cn; i++) {
             if (bits[i] == "1")
                 a += Binom.choose(n, c++);
