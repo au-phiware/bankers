@@ -39,24 +39,24 @@ var Bankers = {
         
         do {
             e -= Binom.choose(n, c++);
-        } while (Binom.choose(n, c) <= a);
-        if (Binom.choose(n - 1, c--) > e)
+        } while (Binom.choose(n, c) <= e);
+        if (Binom.choose(n - 1, c) > e) {
             b[i] = "1";
-        else
+            c--;
+        } else
             b[i] = "0";
         
-        while (c >= 0) {
+        while (c > 0) {
             if (b[i] == "0")
                 e -= Binom.choose(n - i - 1, c);
             if (Binom.choose(n - i, c) > e) { 
-                b[i++] = "1";
+                b[++i] = "1";
                 c--;
             } else
-                b[i++] = "0";
+                b[++i] = "0";
         }
-        while (i < n) {
-            b[i++] = "0";
-        }
+        while (++i < n)
+            b[i] = "0";
         
         return b.join("");
     },
