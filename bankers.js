@@ -1,7 +1,7 @@
-if (String.prototype.reverse == undefined)
-    String.prototype.reverse = function(){
+if (typeof String.prototype.reverse == "undefined")
+    String.prototype.reverse = function() {
         return this.split("").reverse().join("");
-    }
+    };
 
 var Bankers = {
     next: function(b) {
@@ -41,9 +41,9 @@ var Bankers = {
         if (Binom.choose(n, c))
             b++;
         while (c-- >= 0) {
-            if (b % 2 == 0)
+            if (b % 2 === 0)
                 e -= Binom.choose(n, c);
-            b << 1;
+            b = b << 1;
             if (Binom.choose(n-- + 1, c)) 
                 b++;
         }
@@ -60,4 +60,5 @@ var Bankers = {
         }
         return a;
     }
-}
+};
+Bankers.version = "0.1";

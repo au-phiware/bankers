@@ -12,4 +12,4 @@ var Binom = {
    }
 };
 
-Binom.version = "0.1"
+Binom.version = "0.1";
