@@ -40,7 +40,7 @@ var Bankers = {
         do {
             e -= Binom.choose(n, c++);
         } while (Binom.choose(n, c) <= a);
-        if (Binom.choose(n - 1, c--))
+        if (Binom.choose(n - 1, c--) > e)
             b[i] = "1";
         else
             b[i] = "0";
