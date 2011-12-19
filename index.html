@@ -16,7 +16,7 @@
                 });
                 $('#a').change(function() {
                   var old = $('#b').val();
-                  $('#b').val(Bankers.to($(this)[0].val()));
+                  $('#b').val(Bankers.to($(this).val()));
                   $('#diff').text($('#b').val() - old);
                 });
             });
