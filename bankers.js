@@ -36,33 +36,27 @@ var Bankers = {
             return b;
         }
         
-        var cn = 0, b = [], c = [], e = [a], i = 0;
+        var b = [], c = 0, e = a;
         do {
-            e[0] -= Binom.choose(n, cn++);
-        } while (Binom.choose(n, cn) <= e[0]);
-        if (Binom.choose(n - 1, cn - 1) <= e[i]) {
-            b[i] = "0";
-            c[i] = 0;
-        } else {
-            b[i] = "1";
-            c[i] = 1;
-        }
+            e -= Binom.choose(n, c++);
+        } while (Binom.choose(n, c) <= e);
+        if (Binom.choose(n - 1, c - 1) > e) {
+            b[0] = "1";
+            c--;
+        } else
+            b[0] = "0";
         
-        while (cn > c[i] && i < n - 1) {
+        var i = 0;
+        while (c > 0 && n - i > 1) {
             if (b[i] == "0")
-                e[i+1] = e[i] - Binom.choose(n - i - 1, cn - c[i] - 1);
-            else
-                e[i+1] = e[i];
-            if (e[i+1] === 0 || Binom.choose(n - i - 2, cn - c[i] - 1) > e[i+1]) { 
-                b[i+1] = "1";
-                c[i+1] = c[i] + 1;
-            } else {
-                b[i+1] = "0";
-                c[i+1] = c[i];
-            }
-            i++;
+                e -= Binom.choose(n - i - 1, c - 1);
+            if (e === 0 || Binom.choose(n - i - 2, c - 1) > e) { 
+                b[++i] = "1";
+                c--;
+            } else
+                b[++i] = "0";
         }
-        while (i < n - 1)
+        while (1 < n - i)
             b[++i] = "0";
         
         return b.join("");
