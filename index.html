@@ -10,14 +10,14 @@
             $(function() {
 //                for (b = "00000000000"; b != "11111111111";) if (Bankers.to(Bankers.from(b = Bankers.next(b)), b.length) != b) throw "Fail: " + b;
                 $('#b').change(function() {
-                  var old = $('#a').value();
-                  $('#a').value(Bankers.from($(this).value()));
-                  $('#diff').text($('#a').value() - old);
+                  var old = $('#a')[0].value();
+                  $('#a')[0].value(Bankers.from($(this)[0].value()));
+                  $('#diff')[0].text($('#a')[0].value() - old);
                 });
                 $('#a').change(function() {
-                  var old = $('#b').value();
-                  $('#b').value(Bankers.to($(this).value()));
-                  $('#diff').text($('#b').value() - old);
+                  var old = $('#b')[0].value();
+                  $('#b')[0].value(Bankers.to($(this)[0].value()));
+                  $('#diff')[0].text($('#b')[0].value() - old);
                 });
             });
         </script>
