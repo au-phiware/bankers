@@ -8,13 +8,23 @@
         <script type="text/javascript" src="bankers.js"></script>
         <script type="text/javascript">
             $(function() {
-                for (b = "00000000000"; b != "11111111111";) if (Bankers.to(Bankers.from(b = Bankers.next(b)), b.length) != b) throw "Fail: " + b;
-                alert("Move along, nothing to see.");
+//                for (b = "00000000000"; b != "11111111111";) if (Bankers.to(Bankers.from(b = Bankers.next(b)), b.length) != b) throw "Fail: " + b;
+                $('#b').change(function() {
+                  var old = $('#a').value();
+                  $('#a').value(Bankers.from($(this).value());
+                  $('#diff').text($('#a').value() - old);
+                });
+                $('#a').change(function() {
+                  var old = $('#b').value();
+                  $('#b').value(Bankers.to($(this).value());
+                  $('#diff').text($('#b').value() - old);
+                });
             });
         </script>
     </head>
     <body>
         <input id="a" value="0" />
         <input id="b" value="0000" />
+        <div id="diff"></div>
     </body>
 </html>
