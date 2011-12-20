@@ -26,7 +26,7 @@ void output (unsigned int b)
  * Use a lookup table (triangle, actually) for speed.
  * Otherwise it's dumb (heart) recursion.
  */
-unsigned int binom (unsigned int n, unsigned int k) {
+unsigned int choose (unsigned int n, unsigned int k) {
     static unsigned int *quick;
     if (n < 0 || k < 0 || k > n)
         return -1;
@@ -42,7 +42,7 @@ unsigned int binom (unsigned int n, unsigned int k) {
 
     unsigned int i = (n * (n - 1)) / 4 + k - 1;
     if (quick[i] == 0)
-        quick[i] = binom(n - 1, k - 1) + binom(n - 1, k);
+        quick[i] = choose(n - 1, k - 1) + choose(n - 1, k);
 
     return quick[i];
 }
@@ -56,21 +56,20 @@ unsigned int compute (unsigned int a)
     if (a == 0)
         return b;
 
-    unsigned int c = 0, e = a, n = length;
+    unsigned int c = 0, e = a, n = length, binom;
+    binom = choose(n, c);
     do {
-        e -= binom(n, c++);
-    } while (binom(n, c) <= e);
-    if (binom(n - 1, c - 1) > e)
-        c--, b |= 1;
+        e -= binom;
+    } while ((binom = choose(n, ++c)) <= e);
 
-    while (c > 0 && n > 1) {
-        if ((b & 1) == 0)
-            e -= binom(n - 1, c - 1);
-        n--, b <<= 1;
-        if (e == 0 || binom(n - 1, c - 1) > e)
+    do {
+        if (e == 0 || (binom = choose(n - 1, c - 1)) > e)
             c--, b |= 1;
-    }
-    b <<= n - 1;
+        else
+            e -= binom;
+    } while (--n && c && ((b <<= 1) || 1));
+    b <<= n;
+
     return b;
 }
 /*
@@ -89,9 +88,9 @@ unsigned int inverse (unsigned int b) {
         if (b & i) c++;
     for (i = 1 << (n - 1); i > 0 && c > 0; --n, i >>= 1)
         if (b & i)
-            a += binom(length, --c);
+            a += choose(length, --c);
         else
-            a += binom(n - 1, c - 1);
+            a += choose(n - 1, c - 1);
 
     return a;
 }
@@ -127,15 +126,13 @@ int main (int argc, char ** argv)
     }
     length = atoi(argv[1]);
     unsigned int b = 0;
-    for (; b < (1 << length) - 1; b++) {
-        output(compute(b));
-    }
-    return 0;
-    for (b = 0; b < (1 << length) - 1; b = next(b)) {
+    for(;;) {
         printf("%4d: ", inverse(b));
         output(compute(inverse(b)));
+        if (b == (1 << length) - 1) break;
+        b = next(b);
     }
-    for (b = 0; b < (1 << length) - 1; b++) {
+    for (b = 0; b < 1 << length; b++) {
         printf("%4d: ", inverse(compute(b)));
         output(compute(b));
     }
