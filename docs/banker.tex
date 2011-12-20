@@ -1,0 +1,83 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage{amsmath}
+
+\author{Corin Lawson}
+\title{The Banker's Sequence}
+
+\begin{document}
+
+\maketitle
+
+\section{Recursive function}
+
+Initial value of the Banker's sequence is a bit string of zeros with length $n$.\\
+
+Let $n$, $y$ and $z$ be such that 
+$$b = \underbrace{b_0b_1b_2\ldots1\overbrace{00\ldots0}^z\overbrace{11\ldots1}^y}_n.$$
+
+\begin{equation}
+next(b)=
+b_0b_1\ldots b_{n-y-z-2}0\overbrace{11\ldots1}^{y+1}\overbrace{00\ldots0}^{z-1}
+\end{equation}
+
+\section{Inverse function}
+
+Let $c_i$ be the cardinality (number of ones) of the first $i+1$ bits in the
+binary representation of $b$ (i.e. bit string $b_0b_1b_2\ldots b_i$),
+where $0 \leq i < n$ and (as a convenience) let the cardinality of $b$ be $c=c_{n-1}$.
+
+\begin{equation}
+a = \sum_{i=0}^{n-1}
+    \begin{cases}
+        \binom{n}{c_i-1}\text{,} & b_i=1\\
+        \binom{n-i-1}{c-c_i-1}\text{,} & b_i=0 \text{ and } c_i < c\\
+        0, & \text{otherwise}
+    \end{cases}
+\end{equation}
+
+\pagebreak
+
+\section{Non-recursive function}
+
+Let $c_i$ be the cardinality of bit string $b_0b_1b_2\ldots b_i$,
+where $0 \leq i < n$ and let the cardinality of $b$ be $c=c_{n-1}$.
+
+Let
+\begin{equation}
+    e_0=a-\sum\limits_{i=0}^{c}\binom{n}{i}
+\end{equation}
+and
+\begin{equation}
+    b_0=\begin{cases}
+        1, & \binom{n-1}{c-1} > e_0 \\
+        0, & \text{otherwise}
+    \end{cases}.
+\end{equation}
+
+\begin{enumerate}
+
+\item Choose $c$ for $\max c$ such that
+\begin{equation}
+    \sum\limits_{i=0}^{c}\binom{n}{i}\leq a.
+\end{equation}
+
+\item For $0<i<n$,
+
+\begin{equation}
+    e_{i+1}=\begin{cases}
+        e_i - \binom{n-i-1}{c-c_i-1}, & b_i=0 \\
+        e_i, & b_i=1
+    \end{cases}
+\end{equation}
+
+\begin{equation}
+    b_{i+1}=\begin{cases}
+        1, & \binom{n-i-2}{c-c_i-1} > e_{i+1} \text{ and } c \geq c_i \\
+        1, & e_{i+1}=0 \text{ and } c \geq c_i \\
+        0, & \text{otherwise}
+    \end{cases}
+\end{equation}
+
+\end{enumerate}
+
+\end{document}
