@@ -14,8 +14,9 @@ void output (mpz_t b, mp_bitcnt_t n)
             str[i++] = '1';
         else
             str[i++] = '.';
-    str[i] = '\n';
+//    str[i] = '\n';
     puts(str);
+    free(str);
 }
 /*
  * Returns the Banker's number at the specified position, a.
@@ -110,13 +111,15 @@ int main (int argc, char ** argv)
         gmp_printf(a_format, a);
         output(b, n);
     }
+    /*
     mpz_set_ui(b, 0);
     for (;;) {
         inverse(a, b, n);
-        gmp_printf("%20Zd: ", a);
+        gmp_printf(a_format, a);
         output(b, n);
         if (mpz_popcount(b) == n) break;
         next(b, b, n);
     }
+    */
     return 0;
 }
