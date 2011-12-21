@@ -7,14 +7,13 @@
  */
 void output (mpz_t b, mp_bitcnt_t n)
 {
-    char *str = calloc(n + 2, sizeof(char));
+    char *str = calloc(n + 1, sizeof(char));
     mp_bitcnt_t i = 0;
     while (i < n)
         if (mpz_tstbit(b, i))
             str[i++] = '1';
         else
             str[i++] = '.';
-//    str[i] = '\n';
     puts(str);
     free(str);
 }
@@ -95,31 +94,41 @@ void next (mpz_t b, mpz_t prev, mp_bitcnt_t n)
  */
 int main (int argc, char ** argv)
 {
-    if (argc != 2)
+    if (argc < 2)
     {
-        printf("Usage: %s n\n", argv[0]);
+        printf("Usage: %s n [a] [b] ...\n", argv[0]);
         exit(1);
     }
+    int i = 2;
     mp_bitcnt_t n = atol(argv[1]);
     char *a_format = calloc(25, sizeof(char));
     sprintf(a_format, "%%%dZd: ", (int)(n * 0.3) + 1);
     mpz_t b, a;
     mpz_init2(b, n);
     mpz_init2(a, n);
-    for (mpz_set_ui(a, 0); n >= mpz_sizeinbase(a, 2); mpz_add_ui(a, a, 1)) {
-        compute(b, a, n);
-        gmp_printf(a_format, a);
-        output(b, n);
-    }
-    /*
-    mpz_set_ui(b, 0);
-    for (;;) {
-        inverse(a, b, n);
-        gmp_printf(a_format, a);
-        output(b, n);
-        if (mpz_popcount(b) == n) break;
-        next(b, b, n);
-    }
-    */
+    if (argc == 2)
+        for (;;) {
+            gmp_printf(a_format, a);
+            output(b, n);
+            mpz_add_ui(a, a, 1);
+            if (n < mpz_sizeinbase(a, 2)) break;
+            next(b, b, n);
+        }
+    else
+        for (; i < argc; i++) {
+            if (!mpz_set_str(b, argv[i], 2) && n >= mpz_sizeinbase(b, 2))
+                inverse(a, b, n);
+            else if (!mpz_set_str(a, argv[i], 10) && n >= mpz_sizeinbase(a, 2))
+                compute(b, a, n);
+            else if (!mpz_set_str(b, argv[i], 16) && n >= mpz_sizeinbase(b, 2))
+                inverse(a, b, n);
+            else if (!mpz_set_str(b, argv[i], 8) && n >= mpz_sizeinbase(b, 2))
+                inverse(a, b, n);
+            else if (!mpz_set_str(b, argv[i], 0) && n >= mpz_sizeinbase(b, 2))
+                inverse(a, b, n);
+            else continue;
+            gmp_printf(a_format, a);
+            output(b, n);
+        }
     return 0;
 }
