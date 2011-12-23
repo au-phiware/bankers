@@ -4,10 +4,11 @@
 package au.com.phiware.math.binom;
 
 import java.lang.ref.SoftReference;
-import java.lang.ref.WeakReference;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import arit.IntegralArithmetics;
-import arit.impl.IntegerArithmetics;
 import arit.impl.LongArithmetics;
 
 /**
@@ -29,6 +30,8 @@ import arit.impl.LongArithmetics;
  *
  */
 public class Binom<V extends Number> extends Number {
+	private static final Logger log = LoggerFactory.getLogger(Binom.class);
+
 	protected class BinomNode {
 		V value;
 		int n, k;
@@ -80,7 +83,7 @@ public class Binom<V extends Number> extends Number {
 		}
 
 		BinomNode(int n, int k) {
-			System.out.printf("%d choose %d\n", n,k);
+			log.debug("{} choose {}", n,k);
 			this.n = n;
 			this.k = k;
 		}
@@ -158,7 +161,7 @@ public class Binom<V extends Number> extends Number {
 			buildNode(down);
 
 		node.value = arithmetics.add(down.value, back.value);
-		System.out.printf("%d choose %d = %d\n", node.n,node.k, node.value);
+		log.debug("{} choose {} = {}", new Object[]{node.n,node.k, node.value});
 
 		return node.value;
 	}
@@ -245,7 +248,7 @@ public class Binom<V extends Number> extends Number {
 			} else {
 				for (int k = 0; k <= n; k++) {
 					Binom<Long> binom = new Binom<Long>(arithmetics, n, k);
-					System.out.printf("sum %d choose %d = %d\n", n, k, binom.sum().longValue());
+					System.out.printf("%d ", binom.longValue());
 				}
 			}
 		}
