@@ -4,12 +4,14 @@
 package au.com.phiware.math.binom;
 
 import java.lang.ref.SoftReference;
+import java.math.BigInteger;
+import java.text.MessageFormat;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import arit.IntegralArithmetics;
-import arit.impl.LongArithmetics;
+import arit.impl.*;
 
 /**
  * Represents a portion of Pascal's triangle, whereby the value of the root of
@@ -30,8 +32,22 @@ import arit.impl.LongArithmetics;
  *
  */
 public class Binom<V extends Number> extends Number {
+	private static final long serialVersionUID = -8905223911595724921L;
 	private static final Logger log = LoggerFactory.getLogger(Binom.class);
 
+	public static Binom<Integer> createIntegerBinom(int n, int k) {
+		IntegralArithmetics<Integer> arithmetics = IntegerArithmetics.getInstance();
+		return new Binom<Integer>(arithmetics, n, k);
+	}
+	public static Binom<Long> createLongBinom(int n, int k) {
+		IntegralArithmetics<Long> arithmetics = LongArithmetics.getInstance();
+		return new Binom<Long>(arithmetics, n, k);
+	}
+	public static Binom<BigInteger> createBigIntegerBinom(int n, int k) {
+		IntegralArithmetics<BigInteger> arithmetics = BigIntegerArithmetics.getInstance();
+		return new Binom<BigInteger>(arithmetics, n, k);
+	}
+	
 	protected class BinomNode {
 		V value;
 		int n, k;
@@ -84,16 +100,24 @@ public class Binom<V extends Number> extends Number {
 
 		BinomNode(int n, int k) {
 			log.debug("{} choose {}", n,k);
+			if (n < 0 || k < 0 || k > n)
+				throw new IllegalArgumentException(MessageFormat.format("Undefined value for n = {0} and k = {1}.", n, k));
+			
 			this.n = n;
 			this.k = k;
 		}
 	}
+	
+	protected BinomNode createNode(int n, int k) {
+		return new BinomNode(n, k);
+	}
+	
 	IntegralArithmetics<V> arithmetics;
 	BinomNode root;
 	
 	public Binom(IntegralArithmetics<V> arithmetics, int n, int k) {
 		this(arithmetics);
-		root = new BinomNode(n, k);
+		root = createNode(n, k);
 	}
 	
 	private Binom(IntegralArithmetics<V> arithmetics, BinomNode node) {
@@ -142,7 +166,7 @@ public class Binom<V extends Number> extends Number {
 		if (down == null && (step = node.back()) != null && (step = step.down()) != null && (step = step.next()) != null)
 			down = step;
 		if (down == null)
-			down = new BinomNode(node.n - 1, node.k);
+			down = createNode(node.n - 1, node.k);
 		node.down(down);
 		node.down.up(node);
 		
@@ -151,7 +175,7 @@ public class Binom<V extends Number> extends Number {
 		if (back == null && (step = node.down()) != null && (step = step.back()) != null && (step = step.up()) != null)
 			back = step;
 		if (back == null)
-			back = new BinomNode(node.n - 1, node.k - 1);
+			back = createNode(node.n - 1, node.k - 1);
 		node.back(back);
 		node.back.next(node);
 
@@ -173,7 +197,7 @@ public class Binom<V extends Number> extends Number {
 		if (node == null && (step = root.down()) != null && (step = step.next()) != null && (step = step.up()) != null)
 			node = step;
 		if (node == null) {
-			node = new BinomNode(root.n + 1, root.k + 1);
+			node = createNode(root.n + 1, root.k + 1);
 			if (root.down() != null)
 				node.down(root.down().next());
 			node.back(root);
@@ -188,7 +212,7 @@ public class Binom<V extends Number> extends Number {
 		if (node == null && (step = root.back()) != null && (step = step.up()) != null && (step = step.next()) != null)
 			node = step;
 		if (node == null) {
-			node = new BinomNode(root.n + 1, root.k);
+			node = createNode(root.n + 1, root.k);
 			if (root.back() != null)
 				node.back(root.back().up());
 			node.down(root);
@@ -202,7 +226,7 @@ public class Binom<V extends Number> extends Number {
 		value();
 		BinomNode node = root.down();
 		if (node == null && root.n > 0)
-			node = new BinomNode(root.n - 1, root.k);
+			node = createNode(root.n - 1, root.k);
 		return new Binom<V>(arithmetics, node);
 	}
 
@@ -212,7 +236,7 @@ public class Binom<V extends Number> extends Number {
 		value();
 		BinomNode node = root.back();
 		if (node == null && root.n == root.k)
-			node = new BinomNode(root.n - 1, root.k - 1);
+			node = createNode(root.n - 1, root.k - 1);
 		return new Binom<V>(arithmetics, node);
 	}
 
