@@ -6,7 +6,6 @@ package au.com.phiware.math.binom;
 import static org.junit.Assert.*;
 
 import java.math.BigInteger;
-import java.text.MessageFormat;
 
 import org.junit.Test;
 
@@ -19,26 +18,27 @@ import arit.impl.*;
  */
 public class BinomTest {
 
-	static long fact(int n)
-    {
+	static long fact(int n) {
         long x = 1;
         for (long i = 1; i <= n; ++i) x *= i;
         return x;
     }
 	
-	static BigInteger factorial(int n)
-    {
+	static BigInteger factorial(int n) {
         BigInteger x = BigInteger.ONE;
         for (int i = 1; i <= n; ++i) x = x.multiply(BigInteger.valueOf(i));
         return x;
     }
+	static int triangle(int n) { return n * (n + 1) / 2; }
 	
 	public void testRow(int n) {
 		IntegralArithmetics<Integer> arithmetics = IntegerArithmetics.getInstance();
+		int storage = triangle((n -1 + 1)/2) + triangle((n-1)/2 + 1); // half the triangle + 1
 		for(int k = 0; k <= n; k++) {
 			BinomCounter.counter = null;
 			BinomCounter<Integer> binom = new BinomCounter<Integer>(arithmetics, n, k);
 			assertEquals(n + " choose " + k, fact(n)/(fact(k)*fact(n-k)), binom.intValue());
+			//assertTrue("storage for "+n+" (choose "+k+") should be no greater than " + storage + " but was "+BinomCounter.getNodeCount(), BinomCounter.getNodeCount() <= storage);
 			assertTrue(BinomCounter.hasAllOnes());
 		}
 	}

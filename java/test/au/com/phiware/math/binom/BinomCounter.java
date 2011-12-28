@@ -39,6 +39,9 @@ public class BinomCounter<V extends Number> extends Binom<V> {
 		return counter.get(n * (n + 1) / 2 + k) + 1;
 	}
 	
+	public static int getNodeCount() {
+		return counter.size();
+	}
 	public static boolean hasAllOnes() {
 		for (int count : counter.values())
 			if (count > 1)
