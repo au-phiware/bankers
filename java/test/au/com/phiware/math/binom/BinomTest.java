@@ -6,6 +6,7 @@ package au.com.phiware.math.binom;
 import static org.junit.Assert.*;
 
 import java.math.BigInteger;
+import java.text.MessageFormat;
 
 import org.junit.Test;
 
@@ -37,7 +38,7 @@ public class BinomTest {
 		for(int k = 0; k <= n; k++) {
 			BinomCounter.counter = null;
 			BinomCounter<Integer> binom = new BinomCounter<Integer>(arithmetics, n, k);
-			assertEquals(fact(n)/(fact(k)*fact(n-k)), binom.intValue());
+			assertEquals(n + " choose " + k, fact(n)/(fact(k)*fact(n-k)), binom.intValue());
 			assertTrue(BinomCounter.hasAllOnes());
 		}
 	}
@@ -49,7 +50,7 @@ public class BinomTest {
 			BinomCounter.counter = null;
 			BinomCounter<Integer> binom = new BinomCounter<Integer>(arithmetics, n, k);
 			expected += fact(n)/(fact(k)*fact(n-k));
-			assertEquals(expected, binom.sum().intValue());
+			assertEquals("sum_i=(0..."+k+")("+n+" choose i)", expected, binom.sum().intValue());
 			assertTrue(BinomCounter.hasAllOnes());
 		}
 	}
@@ -67,7 +68,7 @@ public class BinomTest {
 		for(int k = 0; k <= n; k++) {
 			BinomCounter.counter = null;
 			BinomCounter<Long> binom = new BinomCounter<Long>(arithmetics, n, k);
-			assertEquals(factorial(n).divide(factorial(k).multiply(factorial(n-k))).longValue(), binom.longValue());
+			assertEquals(n + " choose " + k, factorial(n).divide(factorial(k).multiply(factorial(n-k))).longValue(), binom.longValue());
 			assertTrue(BinomCounter.hasAllOnes());
 		}
 	}
@@ -79,7 +80,7 @@ public class BinomTest {
 		for(int k = 0; k <= n; k++) {
 			BinomCounter.counter = null;
 			BinomCounter<BigInteger> binom = new BinomCounter<BigInteger>(arithmetics, n, k);
-			assertEquals(factorial(n).divide(factorial(k).multiply(factorial(n-k))), binom.value());
+			assertEquals(n + " choose " + k, factorial(n).divide(factorial(k).multiply(factorial(n-k))), binom.value());
 			assertTrue(BinomCounter.hasAllOnes());
 		}
 	}
@@ -90,7 +91,7 @@ public class BinomTest {
 		int n = 600, k = 300;
 		BinomCounter.counter = null;
 		BinomCounter<BigInteger> binom = new BinomCounter<BigInteger>(arithmetics, n, k);
-		assertEquals(
+		assertEquals(n + " choose " + k, 
 				new BigInteger("135107941996194268514474877978504530397233945449193479925965721786474150408005716961950480198274469818673334131365837249043900490761151591695308427048536947621976068789875968372656"),
 				binom.value());
 	}
@@ -116,7 +117,7 @@ public class BinomTest {
 			int expected = new BinomCounter<Integer>(arithmetics, n + 1, k).intValue();
 			BinomCounter.counter = null;
 			BinomCounter<Integer> binom = new BinomCounter<Integer>(arithmetics, n, k);
-			assertEquals(expected, binom.up().intValue());
+			assertEquals((n + 1) + " choose " + k, expected, binom.up().intValue());
 			assertTrue(BinomCounter.hasAllOnes());
 		}
 	}
@@ -132,7 +133,7 @@ public class BinomTest {
 			int expected = new BinomCounter<Integer>(arithmetics, n - 1, k).intValue();
 			BinomCounter.counter = null;
 			BinomCounter<Integer> binom = new BinomCounter<Integer>(arithmetics, n, k);
-			assertEquals(expected, binom.down().intValue());
+			assertEquals((n - 1) + " choose " + k, expected, binom.down().intValue());
 			assertTrue(BinomCounter.hasAllOnes());
 		}
 	}
@@ -148,7 +149,7 @@ public class BinomTest {
 			int expected = new BinomCounter<Integer>(arithmetics, n + 1, k + 1).intValue();
 			BinomCounter.counter = null;
 			BinomCounter<Integer> binom = new BinomCounter<Integer>(arithmetics, n, k);
-			assertEquals(expected, binom.next().intValue());
+			assertEquals((n + 1) + " choose " + (k + 1), expected, binom.next().intValue());
 			assertTrue(BinomCounter.hasAllOnes());
 		}
 	}
@@ -164,7 +165,7 @@ public class BinomTest {
 			int expected = new BinomCounter<Integer>(arithmetics, n - 1, k - 1).intValue();
 			BinomCounter.counter = null;
 			BinomCounter<Integer> binom = new BinomCounter<Integer>(arithmetics, n, k);
-			assertEquals(expected, binom.back().intValue());
+			assertEquals((n - 1) + " choose " + (k - 1), expected, binom.back().intValue());
 			assertTrue(BinomCounter.hasAllOnes());
 		}
 	}
