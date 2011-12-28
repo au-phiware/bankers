@@ -99,30 +99,36 @@ public class Binom<V extends Number> extends Number {
 		}
 
 		BinomNode(int n, int k) {
-			log.debug("{} choose {}", n,k);
-			if (n < 0 || k < 0 || k > n)
-				throw new IllegalArgumentException(MessageFormat.format("Undefined value for n = {0} and k = {1}.", n, k));
-			
 			this.n = n;
 			this.k = k;
 		}
 	}
 	
 	protected BinomNode createNode(int n, int k) {
+		log.debug("{} choose {}", n,k);
 		return new BinomNode(n, k);
 	}
 	
 	IntegralArithmetics<V> arithmetics;
 	BinomNode root;
+	boolean folded = false;
 	
 	public Binom(IntegralArithmetics<V> arithmetics, int n, int k) {
 		this(arithmetics);
-		root = createNode(n, k);
+		if (n < 0 || k < 0 || k > n)
+			throw new IllegalArgumentException(MessageFormat.format("Undefined value for n = {0} and k = {1}.", n, k));
+
+		if (k > n / 2) {
+			root = createNode(n, n - k);
+			folded = true;
+		} else
+			root = createNode(n, k);
 	}
 	
-	private Binom(IntegralArithmetics<V> arithmetics, BinomNode node) {
+	private Binom(IntegralArithmetics<V> arithmetics, BinomNode node, boolean folded) {
 		this(arithmetics);
 		root = node;
+		this.folded = folded;
 	}
 
 	private Binom(IntegralArithmetics<V> arithmetics) {
@@ -135,31 +141,49 @@ public class Binom<V extends Number> extends Number {
 		return root.value;
 	}
 	
+	private V       one()           { return arithmetics.one      ();     }
+	private V       add(V a, V   b) { return arithmetics.add      (a, b); }
+	private V shiftLeft(V a, int b) { return arithmetics.shiftLeft(a, b); }
+	
 	V sum() {
 		if (root.value == null)
 			buildNode(root);
 		V sum = root.value;
-		BinomNode step = root.back();
-		if (step != null) {
-			sum = arithmetics.add(sum, arithmetics.one());
-			int k = step.k;
-			while (step.k > 0) {
-				sum = arithmetics.add(sum, arithmetics.shiftLeft(arithmetics.add(step.value, arithmetics.one()), k - step.k));
-				step = step.back();
+		if (root.k == (folded ? 0 : root.n))
+			sum = shiftLeft(one(), root.n);
+		else if (root.k != 0) {
+			BinomNode step = folded ? root.down() : root.back();
+			if (step != null) {
+				sum = add(sum, one());
+				int i = 0,
+				    max = folded ? step.n - step.k : step.k;
+				while (i < max) {
+					sum = add(sum, shiftLeft(add(step.value, one()), i++));
+					step = folded ? step.down() : step.back();
+				}
 			}
-		} else if (root.k == root.n) {
-			sum = arithmetics.shiftLeft(arithmetics.one(), root.n);
 		}
+
 		return sum;
 	}
 
 	private V buildNode(BinomNode node) {
 		if (node.n <= 1 || node.k == 0 || node.k == node.n)
-			return node.value = arithmetics.one();
+			return node.value = one();
+		log.debug("{} choose {} = ?", new Object[]{node.n,node.k});
 		
 		BinomNode step;
 		BinomNode down = node.down();
 		BinomNode back = node.back();
+
+		if (back == null && (step = node.up()) != null && (step = step.back()) != null && (step = step.down()) != null)
+			back = step;
+		if (back == null && (step = node.down()) != null && (step = step.back()) != null && (step = step.up()) != null)
+			back = step;
+		if (back == null)
+			back = createNode(node.n - 1, node.k - 1);
+		node.back(back);
+		back.next(node);
 
 		if (down == null && (step = node.next()) != null && (step = step.down()) != null && (step = step.back()) != null)
 			down = step;
@@ -168,29 +192,20 @@ public class Binom<V extends Number> extends Number {
 		if (down == null)
 			down = createNode(node.n - 1, node.k);
 		node.down(down);
-		node.down.up(node);
+		down.up(node);
 		
-		if (back == null && (step = node.up()) != null && (step = step.back()) != null && (step = step.down()) != null)
-			back = step;
-		if (back == null && (step = node.down()) != null && (step = step.back()) != null && (step = step.up()) != null)
-			back = step;
-		if (back == null)
-			back = createNode(node.n - 1, node.k - 1);
-		node.back(back);
-		node.back.next(node);
-
 		if (back.value == null)
 			buildNode(back);
 		if (down.value == null)
 			buildNode(down);
 
-		node.value = arithmetics.add(down.value, back.value);
+		node.value = add(down.value, back.value);
 		log.debug("{} choose {} = {}", new Object[]{node.n,node.k, node.value});
 
 		return node.value;
 	}
 	
-	public Binom<V> next() {
+	private BinomNode nextNode() {
 		BinomNode step, node = root.next();
 		if (node == null && (step = root.up()) != null && (step = step.next()) != null && (step = step.down()) != null)
 			node = step;
@@ -202,10 +217,14 @@ public class Binom<V extends Number> extends Number {
 				node.down(root.down().next());
 			node.back(root);
 		}
-		return new Binom<V>(arithmetics, node);
+		return node;
+	}
+	
+	public Binom<V> next() {
+		return new Binom<V>(arithmetics, folded ? upNode() : nextNode(), folded);
 	}
 
-	public Binom<V> up() {
+	private BinomNode upNode() {
 		BinomNode step, node = root.up();
 		if (node == null && (step = root.next()) != null && (step = step.up()) != null && (step = step.back()) != null)
 			node = step;
@@ -217,27 +236,39 @@ public class Binom<V extends Number> extends Number {
 				node.back(root.back().up());
 			node.down(root);
 		}
-		return new Binom<V>(arithmetics, node);
+		return node;
 	}
 
-	public Binom<V> down() {
+	public Binom<V> up() {
+		return new Binom<V>(arithmetics, folded ? nextNode() : upNode(), folded);
+	}
+
+	private BinomNode downNode() {
 		if (root.n == root.k)
 			return null;
 		value();
 		BinomNode node = root.down();
 		if (node == null && root.n > 0)
 			node = createNode(root.n - 1, root.k);
-		return new Binom<V>(arithmetics, node);
+		return node;
 	}
 
-	public Binom<V> back() {
+	public Binom<V> down() {
+		return new Binom<V>(arithmetics, folded ? backNode() : downNode(), folded);
+	}
+
+	private BinomNode backNode() {
 		if (root.k == 0)
 			return null;
 		value();
 		BinomNode node = root.back();
 		if (node == null && root.n == root.k)
 			node = createNode(root.n - 1, root.k - 1);
-		return new Binom<V>(arithmetics, node);
+		return node;
+	}
+
+	public Binom<V> back() {
+		return new Binom<V>(arithmetics, folded ? downNode() : backNode(), folded);
 	}
 
 	@Override
