@@ -149,17 +149,19 @@ public class Binom<V extends Number> extends Number {
 		if (root.value == null)
 			buildNode(root);
 		V sum = root.value;
+		boolean folded = this.folded;
 		if (root.k == (folded ? 0 : root.n))
 			sum = shiftLeft(one(), root.n);
 		else if (root.k != 0) {
-			BinomNode step = folded ? root.down() : root.back();
+			BinomNode step = folded ? downNode(root) : root.back();
 			if (step != null) {
 				sum = add(sum, one());
 				int i = 0,
 				    max = folded ? step.n - step.k : step.k;
 				while (i < max) {
+					if (step.n % 2 == 0 && step.k == step.n / 2) folded = false;
 					sum = add(sum, shiftLeft(add(step.value, one()), i++));
-					step = folded ? step.down() : step.back();
+					step = folded ? downNode(step) : step.back();
 				}
 			}
 		}
@@ -308,12 +310,12 @@ public class Binom<V extends Number> extends Number {
 			if (argv.length > 1) {
 				for (int i = 1; i < argv.length; i++) {
 					Binom<Long> binom = new Binom<Long>(arithmetics, n, new Integer(argv[i]));
-					System.out.printf("%d ", binom.longValue());
+					System.out.printf("%d %d\n", binom.longValue(), binom.sum().longValue());
 				}
 			} else {
 				for (int k = 0; k <= n; k++) {
 					Binom<Long> binom = new Binom<Long>(arithmetics, n, k);
-					System.out.printf("%d ", binom.longValue());
+					System.out.printf("%d %d\n", binom.longValue(), binom.sum().longValue());
 				}
 			}
 		}
