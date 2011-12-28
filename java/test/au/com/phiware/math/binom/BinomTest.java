@@ -33,12 +33,20 @@ public class BinomTest {
 	
 	public void testRow(int n) {
 		IntegralArithmetics<Integer> arithmetics = IntegerArithmetics.getInstance();
-		int storage = triangle((n -1 + 1)/2) + triangle((n-1)/2 + 1); // half the triangle + 1
 		for(int k = 0; k <= n; k++) {
 			BinomCounter.counter = null;
 			BinomCounter<Integer> binom = new BinomCounter<Integer>(arithmetics, n, k);
 			assertEquals(n + " choose " + k, fact(n)/(fact(k)*fact(n-k)), binom.intValue());
-			//assertTrue("storage for "+n+" (choose "+k+") should be no greater than " + storage + " but was "+BinomCounter.getNodeCount(), BinomCounter.getNodeCount() <= storage);
+		}
+	}
+	
+	public void testRowStorage(int n) {
+		IntegralArithmetics<Integer> arithmetics = IntegerArithmetics.getInstance();
+		int storage = triangle((n -1 + 1)/2) + triangle((n-1)/2 + 1); // half the triangle + 1
+		for(int k = 0; k <= n; k++) {
+			BinomCounter.counter = null;
+			assertTrue("binom for "+n+" choose "+k+" should be non-zero", new BinomCounter<Integer>(arithmetics, n, k).intValue() > 0);
+			assertTrue("storage for "+n+" (choose "+k+") should be no greater than " + storage + " but was "+BinomCounter.getNodeCount(), BinomCounter.getNodeCount() <= storage);
 			assertTrue(BinomCounter.hasAllOnes());
 		}
 	}
@@ -59,6 +67,12 @@ public class BinomTest {
 	public void testRowsUpTo10() {
 		for (int n = 1; n <= 10; n ++)
 			testRow(n);
+	}
+	
+	@Test
+	public void testRowStorageUpTo10() {
+		for (int n = 1; n <= 10; n ++)
+			testRowStorage(n);
 	}
 	
 	@Test

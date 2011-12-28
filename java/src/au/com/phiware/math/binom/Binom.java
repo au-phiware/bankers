@@ -173,9 +173,9 @@ public class Binom<V extends Number> extends Number {
 		log.debug("{} choose {} = ?", new Object[]{node.n,node.k});
 		
 		node.back(backNode(node));
-		//if (node.k > (node.n - 1) / 2)
-		//	node.down(backNode(node));
-		//else
+		if (node.k > (node.n - 1) / 2)
+			node.down(backNode(node));
+		else
 			node.down(downNode(node));
 		
 		if (node.back.value == null)
@@ -215,8 +215,9 @@ public class Binom<V extends Number> extends Number {
 				return null;
 			if (root.k == 0 && root.n > 0)
 				return createNode(root.n - 1, root.k);
-			if (node == null && (step = root.next()) != null && (step = step.down()) != null && (step = step.back()) != null)
-				node = step;
+			if (node == null && (step = root.next()) != null && (step = step.down()) != null)
+				if ((step = (root.k + 1 > root.n / 2) ? step.down() : step.back()) != null)
+					node = step;
 			if (node == null && (step = root.back()) != null && (step = step.down()) != null && (step = step.next()) != null)
 				node = step;
 			if (node == null)
