@@ -6,7 +6,7 @@ package au.com.phiware.math.binom;
 import java.util.HashMap;
 import java.util.Map;
 
-import arit.IntegralArithmetics;
+import au.com.phiware.math.ring.BitArithmetic;
 
 /**
  * @author Corin Lawson <me@corinlawson.com.au>
@@ -16,7 +16,7 @@ public class BinomCounter<V extends Number> extends Binom<V> {
 	private static final long serialVersionUID = -2329260083589546111L;
 	static Map<Integer, Integer> counter;
 	
-	public BinomCounter(IntegralArithmetics<V> arithmetics, int n, int k) {
+	public BinomCounter(BitArithmetic<V> arithmetics, int n, int k) {
 		super(arithmetics, n, k);
 	}
 

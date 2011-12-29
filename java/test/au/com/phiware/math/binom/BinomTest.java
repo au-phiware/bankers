@@ -9,8 +9,10 @@ import java.math.BigInteger;
 
 import org.junit.Test;
 
-import arit.IntegralArithmetics;
-import arit.impl.*;
+import au.com.phiware.math.ring.BigIntegerArithmetic;
+import au.com.phiware.math.ring.BitArithmetic;
+import au.com.phiware.math.ring.IntegerArithmetic;
+import au.com.phiware.math.ring.LongArithmetic;
 
 /**
  * @author Corin Lawson <me@corinlawson.com.au>
@@ -32,7 +34,7 @@ public class BinomTest {
 	static int triangle(int n) { return n * (n + 1) / 2; }
 	
 	public void testRow(int n) {
-		IntegralArithmetics<Integer> arithmetics = IntegerArithmetics.getInstance();
+		BitArithmetic<Integer> arithmetics = IntegerArithmetic.getInstance();
 		for(int k = 0; k <= n; k++) {
 			BinomCounter.counter = null;
 			BinomCounter<Integer> binom = new BinomCounter<Integer>(arithmetics, n, k);
@@ -41,7 +43,7 @@ public class BinomTest {
 	}
 	
 	public void testRowStorage(int n) {
-		IntegralArithmetics<Integer> arithmetics = IntegerArithmetics.getInstance();
+		BitArithmetic<Integer> arithmetics = IntegerArithmetic.getInstance();
 		int storage = triangle((n -1 + 1)/2) + triangle((n-1)/2 + 1); // half the triangle + 1
 		for(int k = 0; k <= n; k++) {
 			BinomCounter.counter = null;
@@ -52,7 +54,7 @@ public class BinomTest {
 	}
 	
 	public void testRowSum(int n) {
-		IntegralArithmetics<Integer> arithmetics = IntegerArithmetics.getInstance();
+		BitArithmetic<Integer> arithmetics = IntegerArithmetic.getInstance();
 		long expected = 0;
 		for(int k = 0; k <= n; k++) {
 			BinomCounter.counter = null;
@@ -77,7 +79,7 @@ public class BinomTest {
 	
 	@Test
 	public void testLongRow() {
-		IntegralArithmetics<Long> arithmetics = LongArithmetics.getInstance();
+		BitArithmetic<Long> arithmetics = LongArithmetic.getInstance();
 		int n = 36;
 		for(int k = 0; k <= n; k++) {
 			BinomCounter.counter = null;
@@ -89,7 +91,7 @@ public class BinomTest {
 	
 	@Test
 	public void testBigRow() {
-		IntegralArithmetics<BigInteger> arithmetics = BigIntegerArithmetics.getInstance();
+		BitArithmetic<BigInteger> arithmetics = BigIntegerArithmetic.getInstance();
 		int n = 67;
 		for(int k = 0; k <= n; k++) {
 			BinomCounter.counter = null;
@@ -101,7 +103,7 @@ public class BinomTest {
 	
 	@Test
 	public void testReallyBigBinom() {
-		IntegralArithmetics<BigInteger> arithmetics = BigIntegerArithmetics.getInstance();
+		BitArithmetic<BigInteger> arithmetics = BigIntegerArithmetic.getInstance();
 		int n = 600, k = 300;
 		BinomCounter.counter = null;
 		BinomCounter<BigInteger> binom = new BinomCounter<BigInteger>(arithmetics, n, k);
@@ -125,7 +127,7 @@ public class BinomTest {
 	 */
 	@Test
 	public void testUp() {
-		IntegralArithmetics<Integer> arithmetics = IntegerArithmetics.getInstance();
+		BitArithmetic<Integer> arithmetics = IntegerArithmetic.getInstance();
 		for(int n = 1; n <= 10; n++)
 		for(int k = 0; k <= n; k++) {
 			int expected = new BinomCounter<Integer>(arithmetics, n + 1, k).intValue();
@@ -141,7 +143,7 @@ public class BinomTest {
 	 */
 	@Test
 	public void testDown() {
-		IntegralArithmetics<Integer> arithmetics = IntegerArithmetics.getInstance();
+		BitArithmetic<Integer> arithmetics = IntegerArithmetic.getInstance();
 		for(int n = 2; n <= 10; n++)
 		for(int k = 0; k < n; k++) {
 			int expected = new BinomCounter<Integer>(arithmetics, n - 1, k).intValue();
@@ -157,7 +159,7 @@ public class BinomTest {
 	 */
 	@Test
 	public void testNext() {
-		IntegralArithmetics<Integer> arithmetics = IntegerArithmetics.getInstance();
+		BitArithmetic<Integer> arithmetics = IntegerArithmetic.getInstance();
 		for(int n = 1; n <= 10; n++)
 		for(int k = 0; k < n; k++) {
 			int expected = new BinomCounter<Integer>(arithmetics, n + 1, k + 1).intValue();
@@ -173,7 +175,7 @@ public class BinomTest {
 	 */
 	@Test
 	public void testBack() {
-		IntegralArithmetics<Integer> arithmetics = IntegerArithmetics.getInstance();
+		BitArithmetic<Integer> arithmetics = IntegerArithmetic.getInstance();
 		for(int n = 2; n <= 10; n++)
 		for(int k = 1; k <= n; k++) {
 			int expected = new BinomCounter<Integer>(arithmetics, n - 1, k - 1).intValue();

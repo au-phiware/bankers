@@ -10,8 +10,11 @@ import java.text.MessageFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import arit.IntegralArithmetics;
-import arit.impl.*;
+import au.com.phiware.math.ring.ArithmeticFactory;
+import au.com.phiware.math.ring.BigIntegerArithmetic;
+import au.com.phiware.math.ring.BitArithmetic;
+import au.com.phiware.math.ring.IntegerArithmetic;
+import au.com.phiware.math.ring.LongArithmetic;
 
 /**
  * Represents a portion of Pascal's triangle, whereby the value of the root of
@@ -35,17 +38,9 @@ public class Binom<V extends Number> extends Number {
 	private static final long serialVersionUID = -8905223911595724921L;
 	private static final Logger log = LoggerFactory.getLogger(Binom.class);
 
-	public static Binom<Integer> createIntegerBinom(int n, int k) {
-		IntegralArithmetics<Integer> arithmetics = IntegerArithmetics.getInstance();
-		return new Binom<Integer>(arithmetics, n, k);
-	}
-	public static Binom<Long> createLongBinom(int n, int k) {
-		IntegralArithmetics<Long> arithmetics = LongArithmetics.getInstance();
-		return new Binom<Long>(arithmetics, n, k);
-	}
-	public static Binom<BigInteger> createBigIntegerBinom(int n, int k) {
-		IntegralArithmetics<BigInteger> arithmetics = BigIntegerArithmetics.getInstance();
-		return new Binom<BigInteger>(arithmetics, n, k);
+	public static <V extends Number> Binom<V> createBinom(V n, V k) throws ClassNotFoundException {
+		BitArithmetic<V> arithmetic = ArithmeticFactory.getBitArithmeticForNumber(n);
+		return new Binom<V>(arithmetic, n.intValue(), k.intValue());
 	}
 	
 	protected class BinomNode {
@@ -109,11 +104,11 @@ public class Binom<V extends Number> extends Number {
 		return new BinomNode(n, k);
 	}
 	
-	IntegralArithmetics<V> arithmetics;
+	BitArithmetic<V> arithmetics;
 	BinomNode root;
 	boolean folded = false;
 	
-	public Binom(IntegralArithmetics<V> arithmetics, int n, int k) {
+	public Binom(BitArithmetic<V> arithmetics, int n, int k) {
 		this(arithmetics);
 		if (n < 0 || k < 0 || k > n)
 			throw new IllegalArgumentException(MessageFormat.format("Undefined value for n = {0} and k = {1}.", n, k));
@@ -125,13 +120,13 @@ public class Binom<V extends Number> extends Number {
 			root = createNode(n, k);
 	}
 	
-	private Binom(IntegralArithmetics<V> arithmetics, BinomNode node, boolean folded) {
+	private Binom(BitArithmetic<V> arithmetics, BinomNode node, boolean folded) {
 		this(arithmetics);
 		root = node;
 		this.folded = folded;
 	}
 
-	private Binom(IntegralArithmetics<V> arithmetics) {
+	private Binom(BitArithmetic<V> arithmetics) {
 		this.arithmetics = arithmetics;
 	}
 
@@ -306,15 +301,15 @@ public class Binom<V extends Number> extends Number {
 	public static void main(String[] argv) {
 		if (argv.length > 0) {
 			int n = new Integer(argv[0]);
-			IntegralArithmetics<Long> arithmetics = LongArithmetics.getInstance();
+			BitArithmetic<Long> arithmetic = LongArithmetic.getInstance();
 			if (argv.length > 1) {
 				for (int i = 1; i < argv.length; i++) {
-					Binom<Long> binom = new Binom<Long>(arithmetics, n, new Integer(argv[i]));
+					Binom<Long> binom = new Binom<Long>(arithmetic, n, new Integer(argv[i]));
 					System.out.printf("%d %d\n", binom.longValue(), binom.sum().longValue());
 				}
 			} else {
 				for (int k = 0; k <= n; k++) {
-					Binom<Long> binom = new Binom<Long>(arithmetics, n, k);
+					Binom<Long> binom = new Binom<Long>(arithmetic, n, k);
 					System.out.printf("%d %d\n", binom.longValue(), binom.sum().longValue());
 				}
 			}
