@@ -148,15 +148,18 @@ public abstract class Bankers<V extends Number> {
 				int n = new Integer(argv[0]), m = 1 << n;
 				if (argv.length > 1 || argv[0].matches("[01]+")) {
 					for (int i = 0; i < argv.length; i++) {
-						try {
-							Bankers<Long> bankers = new Bankers<Long>(argv[i].length()){};
+						if (argv[i].matches("0[01]+") || argv[i].matches("0b[01]+")
+								|| (argv[i].matches("1[01]+")
+										&& Long.parseLong(argv[i]) >= 1 << n)) {
+							String b = argv[i].replaceFirst("^0b", "");
+							Bankers<Long> bankers = new Bankers<Long>(b.length()){};
 							System.out.println(
 								String.format(
-									"%"+((int)Math.log10(argv[i].length()) + 1)+"d",
-									bankers.from(Long.parseLong(argv[i], 2))
+									"%"+((int) Math.log10(b.length()) + 1)+"d",
+									bankers.from(Long.parseLong(b, 2))
 								)
 							);
-						} catch (NumberFormatException e) {
+						} else {
 							if (i > 0) {
 								Bankers<Long> bankers = new Bankers<Long>(n){};
 								System.out.println(
