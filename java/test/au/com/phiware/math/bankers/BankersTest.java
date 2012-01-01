@@ -63,7 +63,7 @@ public class BankersTest {
 		for (; i < 1 << bankers.length(); i++) {
 			BinomCounter.resetCounter();
 			assertEquals("next and from should be the same for length "+bankers.length(), i, bankers.from(b));
-			assertTrue(BinomCounter.hasAllOnes());
+			assertTrue("Should be efficient at "+i+" of length "+bankers.length(), BinomCounter.hasAllOnes());
 			b = bankers.next(b);
 		}
 	}
@@ -80,7 +80,7 @@ public class BankersTest {
 		for (; i < 1 << bankers.length(); i++) {
 			BinomCounter.resetCounter();
 			assertEquals("next and to should be the same for length "+bankers.length(), b, bankers.to(i));
-			assertTrue(BinomCounter.hasAllOnes());
+			assertTrue("Should be efficient at "+i+" of length "+bankers.length(), BinomCounter.hasAllOnes());
 			b = bankers.next(b);
 		}
 	}

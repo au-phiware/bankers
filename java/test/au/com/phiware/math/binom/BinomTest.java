@@ -49,7 +49,7 @@ public class BinomTest {
 			BinomCounter.resetCounter();
 			assertTrue("binom for "+n+" choose "+k+" should be non-zero", new BinomCounter<Integer>(arithmetics, n, k).intValue() > 0);
 			assertTrue("storage for "+n+" (choose "+k+") should be no greater than " + storage + " but was "+BinomCounter.getNodeCount(), BinomCounter.getNodeCount() <= storage);
-			assertTrue(BinomCounter.hasAllOnes());
+			assertTrue("Should be efficient at "+n+" choose "+k, BinomCounter.hasAllOnes());
 		}
 	}
 	
@@ -60,8 +60,8 @@ public class BinomTest {
 			BinomCounter.resetCounter();
 			BinomCounter<Integer> binom = new BinomCounter<Integer>(arithmetics, n, k);
 			expected += fact(n)/(fact(k)*fact(n-k));
-			assertEquals("sum_i=(0..."+k+")("+n+" choose i)", expected, binom.sum().intValue());
-			assertTrue(BinomCounter.hasAllOnes());
+			assertEquals("sum "+n+" choose 0..."+k, expected, binom.sum().intValue());
+			assertTrue("Should be efficient at sum "+n+" choose 0..."+k, BinomCounter.hasAllOnes());
 		}
 	}
 	
@@ -85,7 +85,7 @@ public class BinomTest {
 			BinomCounter.resetCounter();
 			BinomCounter<Long> binom = new BinomCounter<Long>(arithmetics, n, k);
 			assertEquals(n + " choose " + k, factorial(n).divide(factorial(k).multiply(factorial(n-k))).longValue(), binom.longValue());
-			assertTrue(BinomCounter.hasAllOnes());
+			assertTrue("Should be efficient at "+n+" choose "+k, BinomCounter.hasAllOnes());
 		}
 	}
 	
@@ -97,7 +97,7 @@ public class BinomTest {
 			BinomCounter.resetCounter();
 			BinomCounter<BigInteger> binom = new BinomCounter<BigInteger>(arithmetics, n, k);
 			assertEquals(n + " choose " + k, factorial(n).divide(factorial(k).multiply(factorial(n-k))), binom.value());
-			assertTrue(BinomCounter.hasAllOnes());
+			assertTrue("Should be efficient at "+n+" choose "+k, BinomCounter.hasAllOnes());
 		}
 	}
 	
@@ -136,7 +136,7 @@ public class BinomTest {
 			assertEquals((n + 1) + " choose " + k, expected.intValue(), binom.intValue());
 			assertEquals("Row of " + (n + 1) + " choose " + k, expected.getRow(), binom.getRow());
 			assertEquals("Column of " + (n + 1) + " choose " + k, expected.getColumn(), binom.getColumn());
-			assertTrue(BinomCounter.hasAllOnes());
+			assertTrue("Should be efficient at "+(n + 1)+" choose "+k, BinomCounter.hasAllOnes());
 		}
 	}
 
@@ -154,7 +154,7 @@ public class BinomTest {
 			assertEquals((n - 1) + " choose " + k, expected.intValue(), binom.intValue());
 			assertEquals("Row of " + (n - 1) + " choose " + k, expected.getRow(), binom.getRow());
 			assertEquals("Column of " + (n - 1) + " choose " + k, expected.getColumn(), binom.getColumn());
-			assertTrue(BinomCounter.hasAllOnes());
+			assertTrue("Should be efficient at "+(n - 1)+" choose "+k, BinomCounter.hasAllOnes());
 		}
 	}
 
@@ -172,7 +172,7 @@ public class BinomTest {
 			assertEquals((n + 1) + " choose " + (k + 1), expected.intValue(), binom.intValue());
 			assertEquals("Row of " + (n + 1) + " choose " + (k + 1), expected.getRow(), binom.getRow());
 			assertEquals("Column of " + (n + 1) + " choose " + (k + 1), expected.getColumn(), binom.getColumn());
-			assertTrue(BinomCounter.hasAllOnes());
+			assertTrue("Should be efficient at "+(n + 1)+" choose "+(k + 1), BinomCounter.hasAllOnes());
 		}
 	}
 
@@ -190,7 +190,7 @@ public class BinomTest {
 			assertEquals((n - 1) + " choose " + (k - 1), expected.intValue(), binom.intValue());
 			assertEquals("Row of " + (n - 1) + " choose " + (k - 1), expected.getRow(), binom.getRow());
 			assertEquals("Column of " + (n - 1) + " choose " + (k - 1), expected.getColumn(), binom.getColumn());
-			assertTrue(BinomCounter.hasAllOnes());
+			assertTrue("Should be efficient at "+(n - 1)+" choose "+(k - 1), BinomCounter.hasAllOnes());
 		}
 	}
 
@@ -208,7 +208,7 @@ public class BinomTest {
 			assertEquals(n + " choose " + (k + 1), expected.intValue(), binom.intValue());
 			assertEquals("Row of " + n + " choose " + (k + 1), expected.getRow(), binom.getRow());
 			assertEquals("Column of " + n + " choose " + (k + 1), expected.getColumn(), binom.getColumn());
-			assertTrue(BinomCounter.hasAllOnes());
+			assertTrue("Should be efficient at "+n+" choose "+(k + 1), BinomCounter.hasAllOnes());
 		}
 	}
 
@@ -226,7 +226,7 @@ public class BinomTest {
 			assertEquals(n + " choose " + (k + 1), expected.intValue(), binom.intValue());
 			assertEquals("Row of " + n + " choose " + (k + 1), expected.getRow(), binom.getRow());
 			assertEquals("Column of " + n + " choose " + (k + 1), expected.getColumn(), binom.getColumn());
-			assertTrue(BinomCounter.hasAllOnes());
+			assertTrue("Should be efficient at "+n+" choose "+(k + 1), BinomCounter.hasAllOnes());
 		}
 	}
 }
