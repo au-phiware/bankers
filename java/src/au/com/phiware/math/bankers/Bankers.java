@@ -80,7 +80,28 @@ public abstract class Bankers<V extends Number> {
 	}
 	
 	public V to(V a) {
-		V b = arithmetic.zero();
+		V e, b = arithmetic.zero();
+		
+		if (a.equals(b)) return b;
+		
+		Binom<V> binom = new Binom<V>(arithmetic, length, 0);
+		while (arithmetic.compare(binom.right().sum(), a) <= 0)
+			binom = binom.right();
+		e = arithmetic.subtract(a, binom.sum());
+		
+		debug(binom);
+		binom = binom.down();
+		for (int i = 0; binom != null; i++) {
+			debug(binom);
+			if (arithmetic.compare(binom.value(), e) > 0) {
+				b = arithmetic.setBit(b, i);
+				binom = binom.back();
+			} else {
+				e = arithmetic.subtract(e, binom.value());
+				binom = binom.down();
+			}
+		}
+		
 		return b;
 	}
 
@@ -142,7 +163,7 @@ public abstract class Bankers<V extends Number> {
 									String.format(
 										"%"+n+"s",
 										Long.toBinaryString(bankers.to(new Long(argv[i])))
-									).replace(' ', '0')
+									).replaceAll("[ 0]", ".")
 								);
 							}
 						}
