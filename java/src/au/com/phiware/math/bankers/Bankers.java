@@ -3,9 +3,12 @@
  */
 package au.com.phiware.math.bankers;
 
+import java.lang.ref.SoftReference;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -79,12 +82,25 @@ public abstract class Bankers<V extends Number> {
 		return next;
 	}
 	
+	private Map<Integer, SoftReference<Binom<V>>> binomRow = new HashMap<Integer, SoftReference<Binom<V>>>();
+	private Binom<V> getBinom(int k) {
+		Binom<V> binom = null;
+		if (binomRow.containsKey(k))
+			binom = binomRow.get(k).get();
+		if (binom == null) {
+			binom = new Binom<V>(arithmetic, length, k);
+			//binom = new au.com.phiware.math.binom.BinomCounter<V>(arithmetic, length, k);
+			binomRow.put(k, new SoftReference<Binom<V>>(binom));
+		}
+		return binom;
+	}
+	
 	public V to(V a) {
 		V e, b = arithmetic.zero();
 		
 		if (a.equals(b)) return b;
 		
-		Binom<V> binom = new Binom<V>(arithmetic, length, 0);
+		Binom<V> binom = getBinom(0);
 		while (arithmetic.compare(binom.right().sum(), a) <= 0)
 			binom = binom.right();
 		e = arithmetic.subtract(a, binom.sum());
@@ -111,7 +127,7 @@ public abstract class Bankers<V extends Number> {
 		if (c == 0)
 			return arithmetic.zero();
 		
-		Binom<V> binom = new Binom<V>(arithmetic, length, c - 1);
+		Binom<V> binom = getBinom(c - 1);
 		V a = binom.sum();
 		
 		debug(binom);
