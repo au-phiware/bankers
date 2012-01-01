@@ -36,7 +36,7 @@ public class BinomTest {
 	public void testRow(int n) {
 		BitArithmetic<Integer> arithmetics = IntegerArithmetic.getInstance();
 		for(int k = 0; k <= n; k++) {
-			BinomCounter.counter = null;
+			BinomCounter.resetCounter();
 			BinomCounter<Integer> binom = new BinomCounter<Integer>(arithmetics, n, k);
 			assertEquals(n + " choose " + k, fact(n)/(fact(k)*fact(n-k)), binom.intValue());
 		}
@@ -46,7 +46,7 @@ public class BinomTest {
 		BitArithmetic<Integer> arithmetics = IntegerArithmetic.getInstance();
 		int storage = triangle((n -1 + 1)/2) + triangle((n-1)/2 + 1); // half the triangle + 1
 		for(int k = 0; k <= n; k++) {
-			BinomCounter.counter = null;
+			BinomCounter.resetCounter();
 			assertTrue("binom for "+n+" choose "+k+" should be non-zero", new BinomCounter<Integer>(arithmetics, n, k).intValue() > 0);
 			assertTrue("storage for "+n+" (choose "+k+") should be no greater than " + storage + " but was "+BinomCounter.getNodeCount(), BinomCounter.getNodeCount() <= storage);
 			assertTrue(BinomCounter.hasAllOnes());
@@ -57,7 +57,7 @@ public class BinomTest {
 		BitArithmetic<Integer> arithmetics = IntegerArithmetic.getInstance();
 		long expected = 0;
 		for(int k = 0; k <= n; k++) {
-			BinomCounter.counter = null;
+			BinomCounter.resetCounter();
 			BinomCounter<Integer> binom = new BinomCounter<Integer>(arithmetics, n, k);
 			expected += fact(n)/(fact(k)*fact(n-k));
 			assertEquals("sum_i=(0..."+k+")("+n+" choose i)", expected, binom.sum().intValue());
@@ -82,7 +82,7 @@ public class BinomTest {
 		BitArithmetic<Long> arithmetics = LongArithmetic.getInstance();
 		int n = 36;
 		for(int k = 0; k <= n; k++) {
-			BinomCounter.counter = null;
+			BinomCounter.resetCounter();
 			BinomCounter<Long> binom = new BinomCounter<Long>(arithmetics, n, k);
 			assertEquals(n + " choose " + k, factorial(n).divide(factorial(k).multiply(factorial(n-k))).longValue(), binom.longValue());
 			assertTrue(BinomCounter.hasAllOnes());
@@ -94,7 +94,7 @@ public class BinomTest {
 		BitArithmetic<BigInteger> arithmetics = BigIntegerArithmetic.getInstance();
 		int n = 67;
 		for(int k = 0; k <= n; k++) {
-			BinomCounter.counter = null;
+			BinomCounter.resetCounter();
 			BinomCounter<BigInteger> binom = new BinomCounter<BigInteger>(arithmetics, n, k);
 			assertEquals(n + " choose " + k, factorial(n).divide(factorial(k).multiply(factorial(n-k))), binom.value());
 			assertTrue(BinomCounter.hasAllOnes());
@@ -105,7 +105,7 @@ public class BinomTest {
 	public void testReallyBigBinom() {
 		BitArithmetic<BigInteger> arithmetics = BigIntegerArithmetic.getInstance();
 		int n = 600, k = 300;
-		BinomCounter.counter = null;
+		BinomCounter.resetCounter();
 		BinomCounter<BigInteger> binom = new BinomCounter<BigInteger>(arithmetics, n, k);
 		assertEquals(n + " choose " + k, 
 				new BigInteger("135107941996194268514474877978504530397233945449193479925965721786474150408005716961950480198274469818673334131365837249043900490761151591695308427048536947621976068789875968372656"),
@@ -130,10 +130,12 @@ public class BinomTest {
 		BitArithmetic<Integer> arithmetics = IntegerArithmetic.getInstance();
 		for(int n = 1; n <= 10; n++)
 		for(int k = 0; k <= n; k++) {
-			int expected = new BinomCounter<Integer>(arithmetics, n + 1, k).intValue();
-			BinomCounter.counter = null;
-			BinomCounter<Integer> binom = new BinomCounter<Integer>(arithmetics, n, k);
-			assertEquals((n + 1) + " choose " + k, expected, binom.up().intValue());
+			Binom<Integer> expected = new Binom<Integer>(arithmetics, n + 1, k);
+			BinomCounter.resetCounter();
+			Binom<Integer> binom = new BinomCounter<Integer>(arithmetics, n, k).up();
+			assertEquals((n + 1) + " choose " + k, expected.intValue(), binom.intValue());
+			assertEquals("Row of " + (n + 1) + " choose " + k, expected.getRow(), binom.getRow());
+			assertEquals("Column of " + (n + 1) + " choose " + k, expected.getColumn(), binom.getColumn());
 			assertTrue(BinomCounter.hasAllOnes());
 		}
 	}
@@ -146,10 +148,12 @@ public class BinomTest {
 		BitArithmetic<Integer> arithmetics = IntegerArithmetic.getInstance();
 		for(int n = 2; n <= 10; n++)
 		for(int k = 0; k < n; k++) {
-			int expected = new BinomCounter<Integer>(arithmetics, n - 1, k).intValue();
-			BinomCounter.counter = null;
-			BinomCounter<Integer> binom = new BinomCounter<Integer>(arithmetics, n, k);
-			assertEquals((n - 1) + " choose " + k, expected, binom.down().intValue());
+			Binom<Integer> expected = new Binom<Integer>(arithmetics, n - 1, k);
+			BinomCounter.resetCounter();
+			Binom<Integer> binom = new BinomCounter<Integer>(arithmetics, n, k).down();
+			assertEquals((n - 1) + " choose " + k, expected.intValue(), binom.intValue());
+			assertEquals("Row of " + (n - 1) + " choose " + k, expected.getRow(), binom.getRow());
+			assertEquals("Column of " + (n - 1) + " choose " + k, expected.getColumn(), binom.getColumn());
 			assertTrue(BinomCounter.hasAllOnes());
 		}
 	}
@@ -162,10 +166,12 @@ public class BinomTest {
 		BitArithmetic<Integer> arithmetics = IntegerArithmetic.getInstance();
 		for(int n = 1; n <= 10; n++)
 		for(int k = 0; k < n; k++) {
-			int expected = new BinomCounter<Integer>(arithmetics, n + 1, k + 1).intValue();
-			BinomCounter.counter = null;
-			BinomCounter<Integer> binom = new BinomCounter<Integer>(arithmetics, n, k);
-			assertEquals((n + 1) + " choose " + (k + 1), expected, binom.next().intValue());
+			Binom<Integer> expected = new Binom<Integer>(arithmetics, n + 1, k + 1);
+			BinomCounter.resetCounter();
+			Binom<Integer> binom = new BinomCounter<Integer>(arithmetics, n, k).next();
+			assertEquals((n + 1) + " choose " + (k + 1), expected.intValue(), binom.intValue());
+			assertEquals("Row of " + (n + 1) + " choose " + (k + 1), expected.getRow(), binom.getRow());
+			assertEquals("Column of " + (n + 1) + " choose " + (k + 1), expected.getColumn(), binom.getColumn());
 			assertTrue(BinomCounter.hasAllOnes());
 		}
 	}
@@ -178,12 +184,49 @@ public class BinomTest {
 		BitArithmetic<Integer> arithmetics = IntegerArithmetic.getInstance();
 		for(int n = 2; n <= 10; n++)
 		for(int k = 1; k <= n; k++) {
-			int expected = new BinomCounter<Integer>(arithmetics, n - 1, k - 1).intValue();
-			BinomCounter.counter = null;
-			BinomCounter<Integer> binom = new BinomCounter<Integer>(arithmetics, n, k);
-			assertEquals((n - 1) + " choose " + (k - 1), expected, binom.back().intValue());
+			Binom<Integer> expected = new Binom<Integer>(arithmetics, n - 1, k - 1);
+			BinomCounter.resetCounter();
+			Binom<Integer> binom = new BinomCounter<Integer>(arithmetics, n, k).back();
+			assertEquals((n - 1) + " choose " + (k - 1), expected.intValue(), binom.intValue());
+			assertEquals("Row of " + (n - 1) + " choose " + (k - 1), expected.getRow(), binom.getRow());
+			assertEquals("Column of " + (n - 1) + " choose " + (k - 1), expected.getColumn(), binom.getColumn());
 			assertTrue(BinomCounter.hasAllOnes());
 		}
 	}
 
+	/**
+	 * Test method for {@link au.com.phiware.math.binom.Binom#right()}.
+	 */
+	@Test
+	public void testRight() {
+		BitArithmetic<Integer> arithmetics = IntegerArithmetic.getInstance();
+		for(int n = 2; n <= 10; n++)
+		for(int k = 0; k <= n - 1; k++) {
+			Binom<Integer> expected = new Binom<Integer>(arithmetics, n, k + 1);
+			BinomCounter.resetCounter();
+			Binom<Integer> binom = new BinomCounter<Integer>(arithmetics, n, k).right();
+			assertEquals(n + " choose " + (k + 1), expected.intValue(), binom.intValue());
+			assertEquals("Row of " + n + " choose " + (k + 1), expected.getRow(), binom.getRow());
+			assertEquals("Column of " + n + " choose " + (k + 1), expected.getColumn(), binom.getColumn());
+			assertTrue(BinomCounter.hasAllOnes());
+		}
+	}
+
+	/**
+	 * Test method for {@link au.com.phiware.math.binom.Binom#left()}.
+	 */
+	@Test
+	public void testLeft() {
+		BitArithmetic<Integer> arithmetics = IntegerArithmetic.getInstance();
+		for(int n = 2; n <= 10; n++)
+		for(int k = 1; k <= n; k++) {
+			Binom<Integer> expected = new Binom<Integer>(arithmetics, n, k - 1);
+			BinomCounter.resetCounter();
+			Binom<Integer> binom = new BinomCounter<Integer>(arithmetics, n, k).left();
+			assertEquals(n + " choose " + (k + 1), expected.intValue(), binom.intValue());
+			assertEquals("Row of " + n + " choose " + (k + 1), expected.getRow(), binom.getRow());
+			assertEquals("Column of " + n + " choose " + (k + 1), expected.getColumn(), binom.getColumn());
+			assertTrue(BinomCounter.hasAllOnes());
+		}
+	}
 }

@@ -3,8 +3,6 @@
  */
 package au.com.phiware.math.ring;
 
-import java.util.Set;
-
 /**
  * @author Corin Lawson <me@corinlawson.com.au>
  *

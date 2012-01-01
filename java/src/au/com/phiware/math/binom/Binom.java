@@ -4,16 +4,13 @@
 package au.com.phiware.math.binom;
 
 import java.lang.ref.SoftReference;
-import java.math.BigInteger;
 import java.text.MessageFormat;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import au.com.phiware.math.ring.ArithmeticFactory;
-import au.com.phiware.math.ring.BigIntegerArithmetic;
 import au.com.phiware.math.ring.BitArithmetic;
-import au.com.phiware.math.ring.IntegerArithmetic;
 import au.com.phiware.math.ring.LongArithmetic;
 
 /**
@@ -97,6 +94,10 @@ public class Binom<V extends Number> extends Number {
 			this.n = n;
 			this.k = k;
 		}
+		
+		public String toString() {
+			return n+" choose "+k+(value==null ? "" : " = "+value);
+		}
 	}
 	
 	protected BinomNode createNode(int n, int k) {
@@ -130,7 +131,7 @@ public class Binom<V extends Number> extends Number {
 		this.arithmetics = arithmetics;
 	}
 
-	V value() {
+	public V value() {
 		if (root.value == null)
 			buildNode(root);
 		return root.value;
@@ -140,7 +141,7 @@ public class Binom<V extends Number> extends Number {
 	private V       add(V a, V   b) { return arithmetics.add      (a, b); }
 	private V shiftLeft(V a, int b) { return arithmetics.shiftLeft(a, b); }
 	
-	V sum() {
+	public V sum() {
 		if (root.value == null)
 			buildNode(root);
 		V sum = root.value;
@@ -255,18 +256,26 @@ public class Binom<V extends Number> extends Number {
 	}
 
 	public Binom<V> back() {
-		if (folded && root.k - 1 > (root.n - 1) / 2)
-			return new Binom<V>(arithmetics, downNode(root), false);
-		else if (folded)
-			return new Binom<V>(arithmetics, downNode(root), true);
-		else 
-			return new Binom<V>(arithmetics, backNode(root), false);
+		BinomNode node;
+		if (folded) {
+			if ((node = downNode(root)) != null)
+				return new Binom<V>(arithmetics, node, root.n - root.k - 1 > (root.n - 1) / 2);
+		} else
+			if ((node = backNode(root)) != null)
+				return new Binom<V>(arithmetics, node, false);
+		
+		return null;
 	}
 	public Binom<V> down() {
-		if (folded || root.k > (root.n - 1) / 2)
-			return new Binom<V>(arithmetics, backNode(root), true);
-		else
-			return new Binom<V>(arithmetics, downNode(root), false);
+		BinomNode node;
+		if (folded || root.k > (root.n - 1) / 2) {
+			if ((node = backNode(root)) != null)
+				return new Binom<V>(arithmetics, node, true);
+		} else
+			if ((node = downNode(root)) != null)
+				return new Binom<V>(arithmetics, node, false);
+		
+		return null;
 	}
 	public Binom<V> next() {
 		if (folded || root.k + 1 > (root.n + 1) / 2)
@@ -276,6 +285,45 @@ public class Binom<V extends Number> extends Number {
 	}
 	public Binom<V> up() {
 		return new Binom<V>(arithmetics, folded ? nextNode(root) : upNode(root), folded);
+	}
+	
+	/**
+	 * Perform down then next movement.
+	 * @return the result of this.down().next()
+	 */
+	public Binom<V> right() {
+		BinomNode node;
+		if (folded || root.k > (root.n - 1) / 2) {
+			if ((node = backNode(root)) != null)
+				return new Binom<V>(arithmetics, upNode(node), true);
+		} else
+			if ((node = downNode(root)) != null) {
+				if (root.k + 1 > root.n / 2)
+					return new Binom<V>(arithmetics, upNode(node), true);
+				else
+					return new Binom<V>(arithmetics, nextNode(node), false);
+			}
+		
+		return null;
+	}
+	/**
+	 * Perform back then up movement.
+	 * @return the result of this.back().up()
+	 */
+	public Binom<V> left() {
+		BinomNode node;
+		if (folded) {
+			if ((node = downNode(root)) != null) {
+				if (root.n - root.k - 1 > (root.n - 1) / 2)
+					return new Binom<V>(arithmetics, nextNode(node), true);
+				else
+					return new Binom<V>(arithmetics, upNode(node), false);
+			}
+		} else
+			if ((node = backNode(root)) != null)
+				return new Binom<V>(arithmetics, upNode(node), false);
+		
+		return null;
 	}
 
 	@Override
@@ -314,5 +362,17 @@ public class Binom<V extends Number> extends Number {
 				}
 			}
 		}
+	}
+
+	public int getRow() {
+		return root.n;
+	}
+
+	public int getColumn() {
+		return folded ? root.n - root.k : root.k;
+	}
+	
+	public String toString() {
+		return root.n+" choose "+(folded ? root.n - root.k : root.k)+(root.value==null ? "" : " = "+root.value);
 	}
 }

@@ -23,6 +23,7 @@ public interface BitArithmetic<V extends Number> extends IntegralArithmetic<V> {
 	public V shiftLeft(V a, int n);
 	public V shiftRight(V a, int n);
 	
+	public int maxBitLength();
 	public int bitCount(V a);
 	public int highestOneBit(V a);
 	public int lowestOneBit(V a);

@@ -11,6 +11,11 @@ public class LongArithmetic implements BitArithmetic<Long> {
 	}
 
 	@Override
+	public int maxBitLength() {
+		return 64;
+	}
+
+	@Override
 	public Long one() {
 		return 1L;
 	}

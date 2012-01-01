@@ -18,6 +18,11 @@ public class IntegerArithmetic implements BitArithmetic<Integer> {
 	}
 
 	@Override
+	public int maxBitLength() {
+		return 32;
+	}
+
+	@Override
 	public Integer one() {
 		return 1;
 	}

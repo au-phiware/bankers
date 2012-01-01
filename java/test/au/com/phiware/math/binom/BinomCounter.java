@@ -14,7 +14,7 @@ import au.com.phiware.math.ring.BitArithmetic;
  */
 public class BinomCounter<V extends Number> extends Binom<V> {
 	private static final long serialVersionUID = -2329260083589546111L;
-	static Map<Integer, Integer> counter;
+	private static Map<Integer, Integer> counter;
 	
 	public BinomCounter(BitArithmetic<V> arithmetics, int n, int k) {
 		super(arithmetics, n, k);
@@ -43,9 +43,14 @@ public class BinomCounter<V extends Number> extends Binom<V> {
 		return counter.size();
 	}
 	public static boolean hasAllOnes() {
-		for (int count : counter.values())
-			if (count > 1)
-				return false;
+		if (counter != null)
+			for (int count : counter.values())
+				if (count > 1)
+					return false;
 		return true;
+	}
+
+	public static void resetCounter() {
+		BinomCounter.counter = null;
 	}
 }

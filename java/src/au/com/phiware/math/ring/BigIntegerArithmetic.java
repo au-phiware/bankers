@@ -19,6 +19,11 @@ public class BigIntegerArithmetic implements BitArithmetic<BigInteger> {
 	}
 
 	@Override
+	public int maxBitLength() {
+		return Integer.MAX_VALUE;
+	}
+
+	@Override
 	public BigInteger one() {
 		return BigInteger.ONE;
 	}
