@@ -57,6 +57,8 @@ public class Binom<V extends Number> extends Number {
 				this.up = null;
 			else if (this.up == null || up != this.up.get())
 				this.up = new SoftReference<BinomNode>(up);
+			if (k + 1 > (n + 1) / 2)
+				this.next = this.up;
 			return up;
 		}
 
@@ -71,6 +73,8 @@ public class Binom<V extends Number> extends Number {
 				this.next = null;
 			else if (this.next == null || next != this.next.get())
 				this.next = new SoftReference<BinomNode>(next);
+			if (k + 1 > (n + 1) / 2)
+				this.up = this.next;
 			return next;
 		}
 
@@ -79,6 +83,8 @@ public class Binom<V extends Number> extends Number {
 		}
 
 		public BinomNode down(BinomNode down) {
+			if (k > (n - 1) / 2)
+				this.back = down;
 			return this.down = down;
 		}
 
@@ -87,6 +93,8 @@ public class Binom<V extends Number> extends Number {
 		}
 
 		public BinomNode back(BinomNode back) {
+			if (k > (n - 1) / 2)
+				this.down = back;
 			return this.back = back;
 		}
 
@@ -170,11 +178,8 @@ public class Binom<V extends Number> extends Number {
 			return node.value = one();
 		log.debug("{} choose {} = ?", new Object[]{node.n,node.k});
 		
-		node.back(backNode(node));
-		if (node.k > (node.n - 1) / 2)
-			node.down(backNode(node));
-		else
-			node.down(downNode(node));
+		backNode(node);
+		downNode(node);
 		
 		if (node.back.value == null)
 			buildNode(node.back);
@@ -203,19 +208,21 @@ public class Binom<V extends Number> extends Number {
 			if (root.up() != null && root.up().back() != null)
 				node.up(root.up().back());
 			node.next(root);
+			root.back(node);
 		}
 		return node;
 	}
 	private BinomNode downNode(BinomNode root) {
+		if (root.k > (root.n - 1) / 2)
+			return backNode(root);
 		BinomNode step, node = root.down();
 		if (node == null) {
 			if (root.n == root.k || root.n <= 0)
 				return null;
 			if (root.k == 0 && root.n > 0)
-				return createNode(root.n - 1, root.k);
-			if (node == null && (step = root.next()) != null && (step = step.down()) != null)
-				if ((step = (root.k + 1 > root.n / 2) ? step.down() : step.back()) != null)
-					node = step;
+				node = createNode(root.n - 1, root.k);
+			if (node == null && (step = root.next()) != null && (step = step.down()) != null && step != root && (step = step.back()) != null)
+				node = step;
 			if (node == null && (step = root.back()) != null && (step = step.down()) != null && (step = step.next()) != null)
 				node = step;
 			if (node == null)
@@ -223,20 +230,24 @@ public class Binom<V extends Number> extends Number {
 			if (root.next() != null && root.next().down() != null)
 				node.next(root.next().down());
 			node.up(root);
+			root.down(node);
 		}
 		return node;
 	}
 	private BinomNode nextNode(BinomNode root) {
+		if (root.k + 1 > (root.n + 1) / 2)
+			return upNode(root);
 		BinomNode step, node = root.next();
 		if (node == null && (step = root.up()) != null && (step = step.next()) != null && (step = step.down()) != null)
 			node = step;
-		if (node == null && (step = root.down()) != null && (step = step.next()) != null && (step = step.up()) != null)
+		if (node == null && (step = root.down()) != null && (step = step.next()) != null && step != root && (step = step.up()) != null)
 			node = step;
 		if (node == null) {
 			node = createNode(root.n + 1, root.k + 1);
 			if (root.down() != null && root.down().next() != null)
 				node.down(root.down().next());
 			node.back(root);
+			root.next(node);
 		}
 		return node;
 	}
@@ -251,6 +262,7 @@ public class Binom<V extends Number> extends Number {
 			if (root.back() != null && root.back().up() != null)
 				node.back(root.back().up());
 			node.down(root);
+			root.up(node);
 		}
 		return node;
 	}
