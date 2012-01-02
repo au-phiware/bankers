@@ -131,6 +131,7 @@ public class BinomTest {
 		for(int n = 1; n <= 10; n++)
 		for(int k = 0; k <= n; k++) {
 			Binom<Integer> expected = new Binom<Integer>(arithmetics, n + 1, k);
+			expected.value();
 			BinomCounter.resetCounter();
 			Binom<Integer> binom = new BinomCounter<Integer>(arithmetics, n, k).up();
 			assertEquals((n + 1) + " choose " + k, expected.intValue(), binom.intValue());
@@ -149,6 +150,7 @@ public class BinomTest {
 		for(int n = 2; n <= 10; n++)
 		for(int k = 0; k < n; k++) {
 			Binom<Integer> expected = new Binom<Integer>(arithmetics, n - 1, k);
+			expected.value();
 			BinomCounter.resetCounter();
 			Binom<Integer> binom = new BinomCounter<Integer>(arithmetics, n, k).down();
 			assertEquals((n - 1) + " choose " + k, expected.intValue(), binom.intValue());
@@ -167,6 +169,7 @@ public class BinomTest {
 		for(int n = 1; n <= 10; n++)
 		for(int k = 0; k < n; k++) {
 			Binom<Integer> expected = new Binom<Integer>(arithmetics, n + 1, k + 1);
+			expected.value();
 			BinomCounter.resetCounter();
 			Binom<Integer> binom = new BinomCounter<Integer>(arithmetics, n, k).next();
 			assertEquals((n + 1) + " choose " + (k + 1), expected.intValue(), binom.intValue());
@@ -185,6 +188,7 @@ public class BinomTest {
 		for(int n = 2; n <= 10; n++)
 		for(int k = 1; k <= n; k++) {
 			Binom<Integer> expected = new Binom<Integer>(arithmetics, n - 1, k - 1);
+			expected.value();
 			BinomCounter.resetCounter();
 			Binom<Integer> binom = new BinomCounter<Integer>(arithmetics, n, k).back();
 			assertEquals((n - 1) + " choose " + (k - 1), expected.intValue(), binom.intValue());
@@ -203,6 +207,7 @@ public class BinomTest {
 		for(int n = 2; n <= 10; n++)
 		for(int k = 0; k <= n - 1; k++) {
 			Binom<Integer> expected = new Binom<Integer>(arithmetics, n, k + 1);
+			expected.value();
 			BinomCounter.resetCounter();
 			Binom<Integer> binom = new BinomCounter<Integer>(arithmetics, n, k).right();
 			assertEquals(n + " choose " + (k + 1), expected.intValue(), binom.intValue());
@@ -221,6 +226,7 @@ public class BinomTest {
 		for(int n = 2; n <= 10; n++)
 		for(int k = 1; k <= n; k++) {
 			Binom<Integer> expected = new Binom<Integer>(arithmetics, n, k - 1);
+			expected.value();
 			BinomCounter.resetCounter();
 			Binom<Integer> binom = new BinomCounter<Integer>(arithmetics, n, k).left();
 			assertEquals(n + " choose " + (k + 1), expected.intValue(), binom.intValue());

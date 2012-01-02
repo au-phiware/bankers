@@ -51,6 +51,7 @@ public class BinomCounter<V extends Number> extends Binom<V> {
 	}
 
 	public static void resetCounter() {
-		BinomCounter.counter = null;
+		if (counter != null)
+			counter.clear();
 	}
 }
