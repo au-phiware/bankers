@@ -1,0 +1,3 @@
+# TeX build by-products
+*.aux
+*.log
