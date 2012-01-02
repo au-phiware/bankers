@@ -40,6 +40,8 @@ public class BinomCounter<V extends Number> extends Binom<V> {
 	}
 	
 	public static int getNodeCount() {
+		if (counter == null)
+			return 0;
 		return counter.size();
 	}
 	public static boolean hasAllOnes() {
