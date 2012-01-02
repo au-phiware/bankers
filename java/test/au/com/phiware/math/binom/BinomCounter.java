@@ -6,8 +6,6 @@ package au.com.phiware.math.binom;
 import java.util.HashMap;
 import java.util.Map;
 
-import au.com.phiware.math.ring.BitArithmetic;
-
 /**
  * @author Corin Lawson <me@corinlawson.com.au>
  *
