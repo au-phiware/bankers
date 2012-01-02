@@ -37,7 +37,7 @@ public class BinomTest {
 		BitArithmetic<Integer> arithmetics = IntegerArithmetic.getInstance();
 		for(int k = 0; k <= n; k++) {
 			BinomCounter.resetCounter();
-			BinomCounter<Integer> binom = new BinomCounter<Integer>(arithmetics, n, k);
+			Binom<Integer> binom = new Binom<Integer>(arithmetics, n, k);
 			assertEquals(n + " choose " + k, fact(n)/(fact(k)*fact(n-k)), binom.intValue());
 		}
 	}
@@ -47,7 +47,7 @@ public class BinomTest {
 		int storage = triangle((n -1 + 1)/2) + triangle((n-1)/2 + 1); // half the triangle + 1
 		for(int k = 0; k <= n; k++) {
 			BinomCounter.resetCounter();
-			assertTrue("binom for "+n+" choose "+k+" should be non-zero", new BinomCounter<Integer>(arithmetics, n, k).intValue() > 0);
+			assertTrue("binom for "+n+" choose "+k+" should be non-zero", new Binom<Integer>(arithmetics, n, k).intValue() > 0);
 			assertTrue("storage for "+n+" (choose "+k+") should be no greater than " + storage + " but was "+BinomCounter.getNodeCount(), BinomCounter.getNodeCount() <= storage);
 			assertTrue("Should be efficient at "+n+" choose "+k, BinomCounter.hasAllOnes());
 		}
@@ -58,7 +58,7 @@ public class BinomTest {
 		long expected = 0;
 		for(int k = 0; k <= n; k++) {
 			BinomCounter.resetCounter();
-			BinomCounter<Integer> binom = new BinomCounter<Integer>(arithmetics, n, k);
+			Binom<Integer> binom = new Binom<Integer>(arithmetics, n, k);
 			expected += fact(n)/(fact(k)*fact(n-k));
 			assertEquals("sum "+n+" choose 0..."+k, expected, binom.sum().intValue());
 			assertTrue("Should be efficient at sum "+n+" choose 0..."+k, BinomCounter.hasAllOnes());
@@ -83,7 +83,7 @@ public class BinomTest {
 		int n = 36;
 		for(int k = 0; k <= n; k++) {
 			BinomCounter.resetCounter();
-			BinomCounter<Long> binom = new BinomCounter<Long>(arithmetics, n, k);
+			Binom<Long> binom = new Binom<Long>(arithmetics, n, k);
 			assertEquals(n + " choose " + k, factorial(n).divide(factorial(k).multiply(factorial(n-k))).longValue(), binom.longValue());
 			assertTrue("Should be efficient at "+n+" choose "+k, BinomCounter.hasAllOnes());
 		}
@@ -95,7 +95,7 @@ public class BinomTest {
 		int n = 67;
 		for(int k = 0; k <= n; k++) {
 			BinomCounter.resetCounter();
-			BinomCounter<BigInteger> binom = new BinomCounter<BigInteger>(arithmetics, n, k);
+			Binom<BigInteger> binom = new Binom<BigInteger>(arithmetics, n, k);
 			assertEquals(n + " choose " + k, factorial(n).divide(factorial(k).multiply(factorial(n-k))), binom.value());
 			assertTrue("Should be efficient at "+n+" choose "+k, BinomCounter.hasAllOnes());
 		}
@@ -106,7 +106,7 @@ public class BinomTest {
 		BitArithmetic<BigInteger> arithmetics = BigIntegerArithmetic.getInstance();
 		int n = 600, k = 300;
 		BinomCounter.resetCounter();
-		BinomCounter<BigInteger> binom = new BinomCounter<BigInteger>(arithmetics, n, k);
+		Binom<BigInteger> binom = new Binom<BigInteger>(arithmetics, n, k);
 		assertEquals(n + " choose " + k, 
 				new BigInteger("135107941996194268514474877978504530397233945449193479925965721786474150408005716961950480198274469818673334131365837249043900490761151591695308427048536947621976068789875968372656"),
 				binom.value());
@@ -133,7 +133,7 @@ public class BinomTest {
 			Binom<Integer> expected = new Binom<Integer>(arithmetics, n + 1, k);
 			expected.value();
 			BinomCounter.resetCounter();
-			Binom<Integer> binom = new BinomCounter<Integer>(arithmetics, n, k).up();
+			Binom<Integer> binom = new Binom<Integer>(arithmetics, n, k).up();
 			assertEquals((n + 1) + " choose " + k, expected.intValue(), binom.intValue());
 			assertEquals("Row of " + (n + 1) + " choose " + k, expected.getRow(), binom.getRow());
 			assertEquals("Column of " + (n + 1) + " choose " + k, expected.getColumn(), binom.getColumn());
@@ -152,7 +152,7 @@ public class BinomTest {
 			Binom<Integer> expected = new Binom<Integer>(arithmetics, n - 1, k);
 			expected.value();
 			BinomCounter.resetCounter();
-			Binom<Integer> binom = new BinomCounter<Integer>(arithmetics, n, k).down();
+			Binom<Integer> binom = new Binom<Integer>(arithmetics, n, k).down();
 			assertEquals((n - 1) + " choose " + k, expected.intValue(), binom.intValue());
 			assertEquals("Row of " + (n - 1) + " choose " + k, expected.getRow(), binom.getRow());
 			assertEquals("Column of " + (n - 1) + " choose " + k, expected.getColumn(), binom.getColumn());
@@ -171,7 +171,7 @@ public class BinomTest {
 			Binom<Integer> expected = new Binom<Integer>(arithmetics, n + 1, k + 1);
 			expected.value();
 			BinomCounter.resetCounter();
-			Binom<Integer> binom = new BinomCounter<Integer>(arithmetics, n, k).next();
+			Binom<Integer> binom = new Binom<Integer>(arithmetics, n, k).next();
 			assertEquals((n + 1) + " choose " + (k + 1), expected.intValue(), binom.intValue());
 			assertEquals("Row of " + (n + 1) + " choose " + (k + 1), expected.getRow(), binom.getRow());
 			assertEquals("Column of " + (n + 1) + " choose " + (k + 1), expected.getColumn(), binom.getColumn());
@@ -190,7 +190,7 @@ public class BinomTest {
 			Binom<Integer> expected = new Binom<Integer>(arithmetics, n - 1, k - 1);
 			expected.value();
 			BinomCounter.resetCounter();
-			Binom<Integer> binom = new BinomCounter<Integer>(arithmetics, n, k).back();
+			Binom<Integer> binom = new Binom<Integer>(arithmetics, n, k).back();
 			assertEquals((n - 1) + " choose " + (k - 1), expected.intValue(), binom.intValue());
 			assertEquals("Row of " + (n - 1) + " choose " + (k - 1), expected.getRow(), binom.getRow());
 			assertEquals("Column of " + (n - 1) + " choose " + (k - 1), expected.getColumn(), binom.getColumn());
@@ -209,7 +209,7 @@ public class BinomTest {
 			Binom<Integer> expected = new Binom<Integer>(arithmetics, n, k + 1);
 			expected.value();
 			BinomCounter.resetCounter();
-			Binom<Integer> binom = new BinomCounter<Integer>(arithmetics, n, k).right();
+			Binom<Integer> binom = new Binom<Integer>(arithmetics, n, k).right();
 			assertEquals(n + " choose " + (k + 1), expected.intValue(), binom.intValue());
 			assertEquals("Row of " + n + " choose " + (k + 1), expected.getRow(), binom.getRow());
 			assertEquals("Column of " + n + " choose " + (k + 1), expected.getColumn(), binom.getColumn());
@@ -228,7 +228,7 @@ public class BinomTest {
 			Binom<Integer> expected = new Binom<Integer>(arithmetics, n, k - 1);
 			expected.value();
 			BinomCounter.resetCounter();
-			Binom<Integer> binom = new BinomCounter<Integer>(arithmetics, n, k).left();
+			Binom<Integer> binom = new Binom<Integer>(arithmetics, n, k).left();
 			assertEquals(n + " choose " + (k + 1), expected.intValue(), binom.intValue());
 			assertEquals("Row of " + n + " choose " + (k + 1), expected.getRow(), binom.getRow());
 			assertEquals("Column of " + n + " choose " + (k + 1), expected.getColumn(), binom.getColumn());

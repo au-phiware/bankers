@@ -4,6 +4,8 @@
 package au.com.phiware.math.binom;
 
 import java.lang.ref.SoftReference;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.text.MessageFormat;
 
 import org.slf4j.Logger;
@@ -110,9 +112,34 @@ public class Binom<V extends Number> extends Number {
 	
 	protected BinomNode createNode(int n, int k) {
 		log.debug("{} choose {}", n,k);
+		count(n, k);
 		return new BinomNode(n, k);
 	}
 	
+	private static final Method DISABLED;
+	private static final Method counter;
+	static {
+		Method method = null;
+		try {
+			method = Binom.class.getDeclaredMethod("count", Integer.class, Integer.class);
+		} catch (Exception e) {}
+		DISABLED = method;
+		try {
+			Class<?> counterClass = ClassLoader.getSystemClassLoader().loadClass("au.com.phiware.math.binom.BinomCounter");
+			method = counterClass.getDeclaredMethod("increment", Integer.class, Integer.class);
+			method.invoke(null, -1, -1);
+		} catch (Exception notFoundOrWorking) {
+			method = DISABLED;
+		}
+		counter = method;
+	}
+	private static void count(Integer n, Integer k) {
+		if (counter != DISABLED)
+			try {
+				counter.invoke(null, n, k);
+			} catch (Exception ignore) {}
+	}
+
 	BitArithmetic<V> arithmetics;
 	BinomNode root;
 	boolean folded = false;
