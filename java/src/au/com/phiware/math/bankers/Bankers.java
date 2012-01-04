@@ -96,15 +96,21 @@ public abstract class Bankers<V extends Number> {
 	}
 	
 	public V to(V a) {
+		return to(a, 0);
+	}
+	
+	public V to(V a, int k) {
 		V e, b = arithmetic.zero();
 		
 		if (a.equals(b)) return b;
 		
-		Binom<V> binom = getBinom(0);
-		while (arithmetic.compare(binom.right().sum(), a) <= 0)
-			binom = binom.right();
-		e = arithmetic.subtract(a, binom.sum());
-		
+		Binom<V> binom = getBinom(k);
+		if (k == 0) {
+			while (arithmetic.compare(binom.right().sum(), a) <= 0)
+				binom = binom.right();
+			e = arithmetic.subtract(a, binom.sum());
+		} else	e = a;
+
 		debug(binom);
 		binom = binom.down();
 		for (int i = 0; binom != null; i++) {
