@@ -80,6 +80,11 @@ public class BankersTest {
 		assertEquals("Banker's should be positive and equal 2 ^ 31 for length "+bankers.length(), 2147483648L, bankers.to(32L).longValue());
 	}
 
+	@Test
+	public void testFrom32() throws ClassNotFoundException {
+		testFrom(new Bankers<Integer>(32){});
+	}
+
 	public void testTo(Bankers<Integer> bankers) {
 		Integer i = 0;
 		Integer b = 0;
@@ -95,5 +100,21 @@ public class BankersTest {
 	public void testToUpTo10() throws ClassNotFoundException {
 		for (int n = 2; n <= 10; n++)
 			testTo(new Bankers<Integer>(n){});
+	}
+
+	@Test
+	public void testTo32() throws ClassNotFoundException {
+		Bankers<Integer> bankers = new Bankers<Integer>(31){};
+		Integer i = -1;
+		Integer b = (1 << 31) + ((1 << 31) - 1);
+
+		BinomCounter.resetCounter();
+		assertEquals("next and to should be the same for length "+bankers.length(), b, bankers.to(i));
+		assertTrue("Should be efficient at "+i+" of length "+bankers.length(), BinomCounter.hasAllOnes());
+
+		i = 1 << 31;
+		BinomCounter.resetCounter();
+		assertEquals("next and to should be the same for length "+bankers.length(), b, bankers.to(i));
+		assertTrue("Should be efficient at "+i+" of length "+bankers.length(), BinomCounter.hasAllOnes());
 	}
 }
