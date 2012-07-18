@@ -14,6 +14,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import au.com.phiware.math.binom.Binom;
+import au.com.phiware.math.binom.BinomFactory;
+import au.com.phiware.math.binom.Binomials;
 import au.com.phiware.math.ring.ArithmeticFactory;
 import au.com.phiware.math.ring.BitArithmetic;
 
@@ -23,17 +25,18 @@ import au.com.phiware.math.ring.BitArithmetic;
  */
 public abstract class Bankers<V extends Number> {
 	private static final Logger log = LoggerFactory.getLogger(Bankers.class);
-	private BitArithmetic<V> arithmetic;
+	private BinomFactory<V> binomFactory;
 	private final int length;
 	private final V mask;
 
 	private V constructMask() {
-		V topBit = arithmetic.setBit(arithmetic.zero(), length - 1);
-		return arithmetic.add(topBit, arithmetic.subtract(topBit, arithmetic.one()));
+		BitArithmetic<V> a = getArithmetic();
+		V topBit = a.setBit(a.zero(), length - 1);
+		return a.add(topBit, a.subtract(topBit, a.one()));
 	}
-	public Bankers(int length, BitArithmetic<V> arithmetic) {
+	public Bankers(int length, BinomFactory<V> binomFactory) {
 		this.length = length;
-		this.arithmetic = arithmetic;
+		this.binomFactory = binomFactory;
 		this.mask = constructMask();
 	}
 	@SuppressWarnings("unchecked")
@@ -44,12 +47,18 @@ public abstract class Bankers<V extends Number> {
 		while (!Bankers.class.equals(superType.getRawType()))
 			superType = (ParameterizedType) ((Class<?>) superType.getRawType()).getGenericSuperclass();
 		Type[] actualType = superType.getActualTypeArguments();
-		arithmetic = ArithmeticFactory.getBitArithmetic((Class<V>) actualType[0]);
+		BitArithmetic<V> arithmetic = ArithmeticFactory.getBitArithmetic((Class<V>) actualType[0]);
 
 		if (length > arithmetic.maxBitLength())
-			throw new IllegalArgumentException("Length, "+length+", too big. Try different component class.");
+			throw new IllegalArgumentException("Length, "+length+", is too big. Try a different component class.");
+
+		binomFactory = Binomials.defaultBinomFactory(arithmetic);
 
 		this.mask = constructMask();
+	}
+
+	public BitArithmetic<V> getArithmetic() {
+		return binomFactory.getArithmetic();
 	}
 
 	public int length() {
@@ -57,34 +66,36 @@ public abstract class Bankers<V extends Number> {
 	}
 
 	public V next(V b) {
-		V next = arithmetic.zero();
+		BitArithmetic<V> a = getArithmetic();
+
+		V next = a.zero();
 		int z = 0, i = length - 1;
 		
-		while (i >= 0 && arithmetic.testBit(b, i))
+		while (i >= 0 && a.testBit(b, i))
 			i--;
-		while (i >= 0 && !arithmetic.testBit(b, i)) {
+		while (i >= 0 && !a.testBit(b, i)) {
 			z++;
 			i--;
 		}
 		
-		V passthru = arithmetic.subtract(
-					arithmetic.shiftLeft(arithmetic.one(), i + 1),
-					arithmetic.one()
+		V passthru = a.subtract(
+					a.shiftLeft(a.one(), i + 1),
+					a.one()
 				);
 		
-		next = arithmetic.or(
+		next = a.or(
 				next,
-				arithmetic.nand(
-					arithmetic.subtract(
-						arithmetic.shiftLeft(arithmetic.one(), length - z + 1),
-						arithmetic.one()
+				a.nand(
+					a.subtract(
+						a.shiftLeft(a.one(), length - z + 1),
+						a.one()
 					),
 					passthru
 				)
 			);
 		if (i > 0) {
-			passthru = arithmetic.shiftRight(passthru, 1);
-			next = arithmetic.or(next, arithmetic.and(b, passthru));
+			passthru = a.shiftRight(passthru, 1);
+			next = a.or(next, a.and(b, passthru));
 		}
 		
 		return next;
@@ -96,36 +107,37 @@ public abstract class Bankers<V extends Number> {
 		if (binomRow.containsKey(k))
 			binom = binomRow.get(k).get();
 		if (binom == null) {
-			binom = new Binom<V>(arithmetic, length, k);
+			binom = binomFactory.createBinom(length, k);
 			//binom = new au.com.phiware.math.binom.BinomCounter<V>(arithmetic, length, k);
 			binomRow.put(k, new SoftReference<Binom<V>>(binom));
 		}
 		return binom;
 	}
 	
-	public V to(V a) {
-		V e, b = arithmetic.zero();
+	public V to(V v) {
+		BitArithmetic<V> a = getArithmetic();
+		V e, b = a.zero();
 		
-		if (arithmetic.testBit(a, length() - 1)) {
-			a = arithmetic.xor(a, mask);
-			b = arithmetic.xor(to(a), mask);
+		if (a.testBit(v, length() - 1)) {
+			v = a.xor(v, mask);
+			b = a.xor(to(v), mask);
 		} else {
-			if (a.equals(b)) return b;
+			if (v.equals(b)) return b;
 			
 			Binom<V> binom = getBinom(0);
-			while (arithmetic.compare(binom.right().sum(), a) <= 0)
+			while (a.compare(binom.right().sum(), v) <= 0)
 				binom = binom.right();
-			e = arithmetic.subtract(a, binom.sum());
+			e = a.subtract(v, binom.sum());
 			
 			debug(binom);
 			binom = binom.down();
 			for (int i = 0; binom != null; i++) {
 				debug(binom);
-				if (arithmetic.compare(binom.value(), e) > 0) {
-					b = arithmetic.setBit(b, i);
+				if (a.compare(binom.value(), e) > 0) {
+					b = a.setBit(b, i);
 					binom = binom.back();
 				} else {
-					e = arithmetic.subtract(e, binom.value());
+					e = a.subtract(e, binom.value());
 					binom = binom.down();
 				}
 			}
@@ -135,29 +147,30 @@ public abstract class Bankers<V extends Number> {
 	}
 
 	public V from(V b) {
-		int n = 0, c = arithmetic.bitCount(b);
+		BitArithmetic<V> a = getArithmetic();
+		int n = 0, c = a.bitCount(b);
 		
 		if (c == 0)
-			return arithmetic.zero();
+			return a.zero();
 		
 		Binom<V> binom = getBinom(c - 1);
-		V a = binom.sum();
+		V v = binom.sum();
 		
 		debug(binom);
 		binom = binom.down();
 		while (binom != null && c > 0) {
 			debug(binom);
-			if (arithmetic.testBit(b, n++)) {
+			if (a.testBit(b, n++)) {
 				binom = binom.back();
 				c--;
 			} else {
-				a = arithmetic.add(a, binom.value());
+				v = a.add(v, binom.value());
 				binom = binom.down();
 			}
 		}
 		
-		log.debug("from {} to {}", b, a);
-		return a;
+		log.debug("from {} to {}", b, v);
+		return v;
 	}
 
 	private void debug(Binom<V> binom) {
