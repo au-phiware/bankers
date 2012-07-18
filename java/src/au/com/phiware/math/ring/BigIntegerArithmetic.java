@@ -57,7 +57,7 @@ public class BigIntegerArithmetic implements BitArithmetic<BigInteger> {
 
 	@Override
 	public BigInteger zero() {
-		return BigInteger.ONE;
+		return BigInteger.ZERO;
 	}
 
 	@Override
