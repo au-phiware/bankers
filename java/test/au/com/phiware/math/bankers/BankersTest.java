@@ -74,6 +74,12 @@ public class BankersTest {
 			testFrom(new Bankers<Integer>(n){});
 	}
 
+	@Test
+	public void testLongWithLength32() throws ClassNotFoundException {
+		Bankers<Long> bankers = new Bankers<Long>(32){};
+		assertEquals("Banker's should be positive and equal 2 ^ 31 for length "+bankers.length(), 2147483648L, bankers.to(32L).longValue());
+	}
+
 	public void testTo(Bankers<Integer> bankers) {
 		Integer i = 0;
 		Integer b = 0;

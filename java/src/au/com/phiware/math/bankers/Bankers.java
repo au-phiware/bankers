@@ -25,16 +25,16 @@ public abstract class Bankers<V extends Number> {
 	private static final Logger log = LoggerFactory.getLogger(Bankers.class);
 	private BitArithmetic<V> arithmetic;
 	private final int length;
-	private final V maxValue;
+	private final V mask;
 
-	private V constructMaxValue() {
+	private V constructMask() {
 		V topBit = arithmetic.setBit(arithmetic.zero(), length - 1);
 		return arithmetic.add(topBit, arithmetic.subtract(topBit, arithmetic.one()));
 	}
 	public Bankers(int length, BitArithmetic<V> arithmetic) {
 		this.length = length;
 		this.arithmetic = arithmetic;
-		this.maxValue = constructMaxValue();
+		this.mask = constructMask();
 	}
 	@SuppressWarnings("unchecked")
 	public Bankers(int length) throws ClassNotFoundException {
@@ -49,7 +49,7 @@ public abstract class Bankers<V extends Number> {
 		if (length > arithmetic.maxBitLength())
 			throw new IllegalArgumentException("Length, "+length+", too big. Try different component class.");
 
-		this.maxValue = constructMaxValue();
+		this.mask = constructMask();
 	}
 
 	public int length() {
@@ -107,8 +107,8 @@ public abstract class Bankers<V extends Number> {
 		V e, b = arithmetic.zero();
 		
 		if (arithmetic.testBit(a, length() - 1)) {
-			a = arithmetic.xor(a, maxValue);
-			b = arithmetic.xor(to(a), maxValue);
+			a = arithmetic.xor(a, mask);
+			b = arithmetic.xor(to(a), mask);
 		} else {
 			if (a.equals(b)) return b;
 			
