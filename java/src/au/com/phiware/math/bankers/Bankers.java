@@ -24,11 +24,17 @@ import au.com.phiware.math.ring.BitArithmetic;
 public abstract class Bankers<V extends Number> {
 	private static final Logger log = LoggerFactory.getLogger(Bankers.class);
 	private BitArithmetic<V> arithmetic;
-	private int length;
+	private final int length;
+	private final V maxValue;
 
+	private V constructMaxValue() {
+		V topBit = arithmetic.setBit(arithmetic.zero(), length - 1);
+		return arithmetic.add(topBit, arithmetic.subtract(topBit, arithmetic.one()));
+	}
 	public Bankers(int length, BitArithmetic<V> arithmetic) {
 		this.length = length;
 		this.arithmetic = arithmetic;
+		this.maxValue = constructMaxValue();
 	}
 	@SuppressWarnings("unchecked")
 	public Bankers(int length) throws ClassNotFoundException {
@@ -42,6 +48,8 @@ public abstract class Bankers<V extends Number> {
 
 		if (length > arithmetic.maxBitLength())
 			throw new IllegalArgumentException("Length, "+length+", too big. Try different component class.");
+
+		this.maxValue = constructMaxValue();
 	}
 
 	public int length() {
@@ -98,23 +106,28 @@ public abstract class Bankers<V extends Number> {
 	public V to(V a) {
 		V e, b = arithmetic.zero();
 		
-		if (a.equals(b)) return b;
-		
-		Binom<V> binom = getBinom(0);
-		while (arithmetic.compare(binom.right().sum(), a) <= 0)
-			binom = binom.right();
-		e = arithmetic.subtract(a, binom.sum());
-		
-		debug(binom);
-		binom = binom.down();
-		for (int i = 0; binom != null; i++) {
+		if (arithmetic.testBit(a, length() - 1)) {
+			a = arithmetic.xor(a, maxValue);
+			b = arithmetic.xor(to(a), maxValue);
+		} else {
+			if (a.equals(b)) return b;
+			
+			Binom<V> binom = getBinom(0);
+			while (arithmetic.compare(binom.right().sum(), a) <= 0)
+				binom = binom.right();
+			e = arithmetic.subtract(a, binom.sum());
+			
 			debug(binom);
-			if (arithmetic.compare(binom.value(), e) > 0) {
-				b = arithmetic.setBit(b, i);
-				binom = binom.back();
-			} else {
-				e = arithmetic.subtract(e, binom.value());
-				binom = binom.down();
+			binom = binom.down();
+			for (int i = 0; binom != null; i++) {
+				debug(binom);
+				if (arithmetic.compare(binom.value(), e) > 0) {
+					b = arithmetic.setBit(b, i);
+					binom = binom.back();
+				} else {
+					e = arithmetic.subtract(e, binom.value());
+					binom = binom.down();
+				}
 			}
 		}
 		
