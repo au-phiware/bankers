@@ -127,7 +127,7 @@ public class Binom<V extends Number> extends Number {
 			Class<?> counterClass = ClassLoader.getSystemClassLoader().loadClass("au.com.phiware.math.binom.BinomCounter");
 			method = counterClass.getDeclaredMethod("increment", Integer.class, Integer.class);
 			method.invoke(null, -1, -1);
-		} catch (Exception notFoundOrWorking) {
+		} catch (Exception notFoundNorWorking) {
 			method = DISABLED;
 		}
 		counter = method;
@@ -219,21 +219,22 @@ public class Binom<V extends Number> extends Number {
 	}
 	
 	private BinomNode backNode(BinomNode root) {
-		BinomNode step, node = root.back();
+		BinomNode //step,
+		          node = root.back();
 		if (node == null) {
 			if (root.k == 0)
 				return null;
 			if (root.n == root.k)
 				node = createNode(root.n - 1, root.k - 1);
-			if (node == null && (step = root.up()) != null && (step = step.back()) != null && (step = step.down()) != null)
+/*			else if ((step = root.up()) != null && (step = step.back()) != null && (step = step.down()) != null)
 				node = step;
-			if (node == null && (step = root.down()) != null && (step = step.back()) != null && (step = step.up()) != null)
+			else if ((step = root.down()) != null && (step = step.back()) != null && (step = step.up()) != null)
 				node = step;
-			if (node == null)
+*/			else
 				node = createNode(root.n - 1, root.k - 1);
-			if (root.up() != null && root.up().back() != null)
-				node.up(root.up().back());
-			node.next(root);
+//			if (root.up() != null && root.up().back() != null)
+//				node.up(root.up().back());
+//			node.next(root);
 			root.back(node);
 		}
 		return node;
@@ -241,21 +242,22 @@ public class Binom<V extends Number> extends Number {
 	private BinomNode downNode(BinomNode root) {
 		if (root.k > (root.n - 1) / 2)
 			return backNode(root);
-		BinomNode step, node = root.down();
+		BinomNode //step,
+		          node = root.down();
 		if (node == null) {
 			if (root.n == root.k || root.n <= 0)
 				return null;
-			if (root.k == 0 && root.n > 0)
+			else if (root.k == 0 && root.n > 0)
 				node = createNode(root.n - 1, root.k);
-			if (node == null && (step = root.next()) != null && (step = step.down()) != null && step != root && (step = step.back()) != null)
+/*			else if ((step = root.next()) != null && (step = step.down()) != null && step != root && (step = step.back()) != null)
 				node = step;
-			if (node == null && (step = root.back()) != null && (step = step.down()) != null && (step = step.next()) != null)
+			else if ((step = root.back()) != null && (step = step.down()) != null && (step = step.next()) != null)
 				node = step;
-			if (node == null)
+*/			else
 				node = createNode(root.n - 1, root.k);
-			if (root.next() != null && root.next().down() != null)
-				node.next(root.next().down());
-			node.up(root);
+//			if (root.next() != null && root.next().down() != null)
+//				node.next(root.next().down());
+//			node.up(root);
 			root.down(node);
 		}
 		return node;
@@ -263,32 +265,40 @@ public class Binom<V extends Number> extends Number {
 	private BinomNode nextNode(BinomNode root) {
 		if (root.k + 1 > (root.n + 1) / 2)
 			return upNode(root);
-		BinomNode step, node = root.next();
-		if (node == null && (step = root.up()) != null && (step = step.next()) != null && (step = step.down()) != null)
-			node = step;
-		if (node == null && (step = root.down()) != null && (step = step.next()) != null && step != root && (step = step.up()) != null)
-			node = step;
+		BinomNode //step,
+		          node = root.next();
 		if (node == null) {
-			node = createNode(root.n + 1, root.k + 1);
-			if (root.down() != null && root.down().next() != null)
-				node.down(root.down().next());
-			node.back(root);
-			root.next(node);
+/*			if ((step = root.up()) != null && (step = step.next()) != null && (step = step.down()) != null)
+				node = step;
+			else if ((step = root.down()) != null && (step = step.next()) != null && step != root && (step = step.up()) != null)
+				node = step;
+			else
+*/			{
+				node = createNode(root.n + 1, root.k + 1);
+//				if (root.down() != null && root.down().next() != null)
+//					node.down(root.down().next());
+//				node.back(root);
+				root.next(node);
+			}
 		}
 		return node;
 	}
 	private BinomNode upNode(BinomNode root) {
-		BinomNode step, node = root.up();
-		if (node == null && (step = root.next()) != null && (step = step.up()) != null && (step = step.back()) != null)
-			node = step;
-		if (node == null && (step = root.back()) != null && (step = step.up()) != null && (step = step.next()) != null)
-			node = step;
+		BinomNode //step,
+		          node = root.up();
 		if (node == null) {
-			node = createNode(root.n + 1, root.k);
-			if (root.back() != null && root.back().up() != null)
-				node.back(root.back().up());
-			node.down(root);
-			root.up(node);
+/*			if ((step = root.next()) != null && (step = step.up()) != null && (step = step.back()) != null)
+				node = step;
+			else if ((step = root.back()) != null && (step = step.up()) != null && (step = step.next()) != null)
+				node = step;
+			else
+*/			{
+				node = createNode(root.n + 1, root.k);
+//				if (root.back() != null && root.back().up() != null)
+//					node.back(root.back().up());
+//				node.down(root);
+				root.up(node);
+			}
 		}
 		return node;
 	}
