@@ -174,23 +174,31 @@ public abstract class Bankers<V extends Number> {
 	public static void main(String[] argv) {
 		try {
 			if (argv.length > 0) {
-				int n = new Integer(argv[0]), m = 1 << n;
+				int n = new Integer(argv[0]);
+				long m = 1L << n;
+				Bankers<Long> bankers = new Bankers<Long>(n){};
 				if (argv.length > 1 || argv[0].matches("[01]+")) {
 					for (int i = 0; i < argv.length; i++) {
 						if (argv[i].matches("0[01]+") || argv[i].matches("0b[01]+")
 								|| (argv[i].matches("1[01]+")
 										&& Long.parseLong(argv[i]) >= 1 << n)) {
 							String b = argv[i].replaceFirst("^0b", "");
-							Bankers<Long> bankers = new Bankers<Long>(b.length()){};
+							Bankers<Long> bbankers = new Bankers<Long>(b.length()){};
 							System.out.println(
 								String.format(
 									"%"+((int) Math.log10(b.length()) + 1)+"d",
-									bankers.from(Long.parseLong(b, 2))
+									bbankers.from(Long.parseLong(b, 2))
 								)
 							);
 						} else {
 							if (i > 0) {
-								Bankers<Long> bankers = new Bankers<Long>(n){};
+								System.out.print(
+										String.format(
+											"%"+n+"s",
+											Long.toBinaryString(new Long(argv[i]))
+										).replaceAll("[ 0]", ".")
+										+ " : "
+									);
 								System.out.println(
 									String.format(
 										"%"+n+"s",
@@ -201,15 +209,24 @@ public abstract class Bankers<V extends Number> {
 						}
 					}
 				} else {
-					Bankers<Long> bankers = new Bankers<Long>(n){};
 					long b = 0L;
-					for (long i = 1; i < m; i++)
+					System.out.println("Generating Banker's sequence for length, "+n+"...");
+					for (long i = 1; i < m; i++) {
+						b = bankers.to(i);
+						System.out.print(
+								String.format(
+									"%"+n+"s",
+									Long.toBinaryString(i)
+								).replaceAll("[ 0]", ".")
+								+ " : "
+							);
 						System.out.println(
 							String.format(
 								"%"+n+"s",
-								Long.toBinaryString(b = bankers.next(b))
+								Long.toBinaryString(b)
 							).replaceAll("[ 0]", ".")
 						);
+					}
 				}
 			}
 		} catch (ClassNotFoundException e) {
