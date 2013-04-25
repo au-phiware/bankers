@@ -30,6 +30,15 @@ public class ArithmeticFactory {
 		if (type.isAssignableFrom(Integer.class))
 			return (BitArithmetic<V>) IntegerArithmetic.getInstance();
 		
+		if (type.isAssignableFrom(Short.class))
+			return (BitArithmetic<V>) IntegerArithmetic.getInstance();
+
+		if (type.isAssignableFrom(Character.class))
+			return (BitArithmetic<V>) IntegerArithmetic.getInstance();
+
+		if (type.isAssignableFrom(Byte.class))
+			return (BitArithmetic<V>) ByteArithmetic.getInstance();
+
 		throw new ClassNotFoundException();
 	}
 

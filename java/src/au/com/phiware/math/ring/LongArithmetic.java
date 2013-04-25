@@ -96,17 +96,17 @@ public class LongArithmetic implements BitArithmetic<Long> {
 
 	@Override
 	public boolean testBit(Long a, int n) {
-		return (a & (1 << n)) != 0;
+		return (a & (1L << n)) != 0;
 	}
 
 	@Override
 	public Long setBit(Long a, int n) {
-		return a | (1 << n);
+		return a | (1L << n);
 	}
 
 	@Override
 	public Long clearBit(Long a, int n) {
-		return a & ~(1 << n);
+		return a & ~(1L << n);
 	}
 
 	@Override
@@ -148,7 +148,7 @@ public class LongArithmetic implements BitArithmetic<Long> {
 	}
 
 	@Override
-	public Long not(Long a, Long b) {
+	public Long not(Long a) {
 		return ~a;
 	}
 
@@ -169,7 +169,7 @@ public class LongArithmetic implements BitArithmetic<Long> {
 
 	@Override
 	public int highestOneBit(Long a) {
-		return 31 - Long.numberOfLeadingZeros(a);
+		return 63 - Long.numberOfLeadingZeros(a);
 	}
 
 	@Override

@@ -19,7 +19,7 @@ public class IntegerArithmetic implements BitArithmetic<Integer> {
 
 	@Override
 	public int maxBitLength() {
-		return 32;
+		return Integer.SIZE;
 	}
 
 	@Override
@@ -68,6 +68,8 @@ public class IntegerArithmetic implements BitArithmetic<Integer> {
 
 	@Override
 	public Integer add(Integer a, Integer b) {
+		if (a == null || b == null)
+			throw new NullPointerException();
 		return a + b;
 	}
 
@@ -155,7 +157,7 @@ public class IntegerArithmetic implements BitArithmetic<Integer> {
 	}
 
 	@Override
-	public Integer not(Integer a, Integer b) {
+	public Integer not(Integer a) {
 		return ~a;
 	}
 
@@ -176,7 +178,7 @@ public class IntegerArithmetic implements BitArithmetic<Integer> {
 
 	@Override
 	public int highestOneBit(Integer a) {
-		return 31 - Integer.numberOfLeadingZeros(a);
+		return Integer.SIZE - 1 - Integer.numberOfLeadingZeros(a);
 	}
 
 	@Override
