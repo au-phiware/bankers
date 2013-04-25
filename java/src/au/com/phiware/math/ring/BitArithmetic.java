@@ -19,7 +19,7 @@ public interface BitArithmetic<V extends Number> extends IntegralArithmetic<V> {
 	public V and(V a, V b);
 	public V nand(V a, V b);
 	public V xor(V a, V b);
-	public V not(V a, V b);
+	public V not(V a);
 	public V shiftLeft(V a, int n);
 	public V shiftRight(V a, int n);
 	

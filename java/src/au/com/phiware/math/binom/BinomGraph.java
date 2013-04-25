@@ -240,12 +240,13 @@ public class BinomGraph<V extends Number> extends Number implements Binom<V>, Bi
 		backNode(node);
 		downNode(node);
 		
-		if (node.back.value == null)
-			buildNode(node.back);
-		if (node.down.value == null)
-			buildNode(node.down);
+		V a, b;
+		if ((a = node.back.value) == null)
+			a = buildNode(node.back);
+		if ((b = node.down.value) == null)
+			b = buildNode(node.down);
 
-		node.value = add(node.down.value, node.back.value);
+		node.value = add(b, a);
 		log.debug("{} choose {} = {}", new Object[]{node.n, node.k, node.value});
 
 		return node.value;

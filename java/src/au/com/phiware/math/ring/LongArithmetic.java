@@ -148,7 +148,7 @@ public class LongArithmetic implements BitArithmetic<Long> {
 	}
 
 	@Override
-	public Long not(Long a, Long b) {
+	public Long not(Long a) {
 		return ~a;
 	}
 

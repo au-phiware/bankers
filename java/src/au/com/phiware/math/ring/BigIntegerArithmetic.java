@@ -144,7 +144,7 @@ public class BigIntegerArithmetic implements BitArithmetic<BigInteger> {
 	}
 
 	@Override
-	public BigInteger not(BigInteger a, BigInteger b) {
+	public BigInteger not(BigInteger a) {
 		return a.not();
 	}
 

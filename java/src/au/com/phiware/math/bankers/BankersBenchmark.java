@@ -2,9 +2,9 @@ package au.com.phiware.math.bankers;
 
 import au.com.phiware.math.ring.BitArithmetic;
 
-import com.github.ericburnett.EnumeratedSubsets;
-import java.math.BigInteger;
-import java.util.BitSet;
+//import com.github.ericburnett.EnumeratedSubsets;
+//import java.math.BigInteger;
+//import java.util.BitSet;
 
 import org.junit.Test;
 import com.carrotsearch.junitbenchmarks.AbstractBenchmark;
@@ -33,6 +33,7 @@ public class BankersBenchmark extends AbstractBenchmark {
 		testTo(bankers);
 	}
 
+	/*
 	@BenchmarkOptions(callgc = false, benchmarkRounds = 1, warmupRounds = 1)
 	@Test
 	public void testEricBurnett() throws ClassNotFoundException {
@@ -45,5 +46,6 @@ public class BankersBenchmark extends AbstractBenchmark {
                     i = i.add(BigInteger.ONE);
                 }
             }
-	}	
+	}
+	*/
 }
