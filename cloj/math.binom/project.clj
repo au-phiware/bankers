@@ -5,4 +5,5 @@
   :dependencies [
     [org.clojure/clojure "1.6.0"]
     [org.clojure/test.check "0.5.7"]
+    [criterium "0.4.3"]
   ])

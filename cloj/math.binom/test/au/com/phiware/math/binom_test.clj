@@ -4,6 +4,7 @@
             [clojure.test.check.clojure-test :refer :all]
             [clojure.test.check.generators :as gen]
             [clojure.test.check.properties :as prop]
+            [criterium.core :refer [bench]]
             [au.com.phiware.math.binom :as binom :refer [binom]]))
 
 (deftest known-values
@@ -54,3 +55,7 @@
                       (== k (binom/pos b))
                       (= b (binom n k)))
                     (or (< n 1) (< k 0) (> k n))))))
+
+(bench (binom 36 11))
+(bench (binom 36 18))
+(bench (binom 600N 300N))
