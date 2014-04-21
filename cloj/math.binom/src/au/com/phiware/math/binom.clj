@@ -1,8 +1,7 @@
 (ns au.com.phiware.math.binom
     (:refer-clojure :exclude [next seq])
     (:import
-      (clojure.lang IDeref)
-      (java.lang.ref SoftReference)))
+      (clojure.lang IDeref)))
 
 (defprotocol BinomCell
   "Represents a cell in Pascal's Triangle, where the cell's value
@@ -21,17 +20,29 @@
                 cell.")
   (up   [cell] "Returns the cell in the same position as the given cell in
                 the succeeding row.")
-  (up!  [_ cell])
   (down [cell] "Returns the cell in the same position as the given cell in
                 the preceeding row.")
   (next [cell] "Returns the cell in the succeeding position and succeeding
                 row as the given cell.")
-  (next![_ cell])
   (back [cell] "Returns the cell in the preceeding position and preceeding
                 row as the given cell.")
 )
 
+(extend-type nil BinomCell
+             (up    [_] nil)
+             (down  [_] nil)
+             (next  [_] nil)
+             (back  [_] nil)
+             (left  [_] nil)
+             (right [_] nil))
+
 (defn seq [f c] (cons @c (lazy-seq (let [d (f c)] (if d (seq f d))))))
+
+(defn soft-ref-biulder [cell] (fn [& _] (java.lang.ref.SoftReference. cell)))
+(defn soft-ref-get [o] (.get o))
+;(defn soft-ref-biulder [cell] (constantly cell)) (defn soft-ref-get [o] o)
+
+(declare binom-cell-1-0 binom-cell-1-1 binom-cell-2-1)
 
 (deftype BinomCellImpl [value n k down-cell back-cell up-cell next-cell]
   IDeref
@@ -41,51 +52,58 @@
   (pos   [_] k)
   (down  [_] down-cell)
   (back  [_] back-cell)
-  (right [_] (cond (== n k)  nil
-                   down-cell (next down-cell)
-                   :else     (down (next _))))
-  (left  [_] (cond (zero? k) nil
-                   back-cell (up back-cell)
-                   :else     (back (up _))))
+  (right [this] (cond (== n k)  nil
+                      (== n 1)  binom-cell-1-1
+                      :else     (next (down this))))
+  (left  [this] (cond (zero? k) nil
+                      (== n 1)  binom-cell-1-0
+                      :else     (up (back this))))
   (sum   [cell] (cond
                   (zero? k) 1
-                  (== k n) (bit-shift-left 1 n) 
-                  :else (reduce +' (map-indexed #(bit-shift-left (inc %2) (max 0 (dec %1))) (remove #(== 1 %) (seq back cell))))))
-  (up    [this] (if (zero? k) nil
-                  (or (and @up-cell (.get @up-cell))
-                      (let [found (up back-cell)
-                            back-up-cell (or found (BinomCellImpl. 1 n (dec k)
-                                                                   nil nil nil (atom nil)))
-                            cell (BinomCellImpl. (+' value @back-up-cell) (inc n) k
-                                                 this back-up-cell (atom nil) (atom nil))]
-                        (up! this cell)
-                        (if-not found (next! back-up-cell cell))
-                        cell))))
-  (next  [this] (if (== n k) nil
-                  (or (and @next-cell (.get @next-cell))
-                      (let [found (next down-cell) 
-                            down-next-cell (or found (BinomCellImpl. 1 n (inc k)
-                                                                     nil nil nil (atom nil)))
-                            cell (BinomCellImpl. (+' value @down-next-cell) (inc n) (inc k)
-                                                 down-next-cell this (atom nil) (atom nil))]
-                        (next! this cell)
-                        (if-not found (up! down-next-cell cell))
-                        cell))))
-  (up!   [_ cell] (if (and up-cell (not @up-cell)
-                           cell (== (row cell) (inc n)) (== (pos cell) k))
-                    (swap! up-cell (fn [_] (SoftReference. cell)))))
-  (next! [_ cell] (if (and next-cell (not @next-cell)
-                           cell (== (row cell) (inc n)) (== (pos cell) (inc k)))
-                    (swap! next-cell (fn [_] (SoftReference. cell)))))
-  )
+                  (== k n)  (bit-shift-left 1 n)
+                  :else     (reduce +' (map-indexed
+                                         #(bit-shift-left (inc %2) (max 0 (dec %1)))
+                                         (remove #(== 1 %) (seq back cell))))))
+  (up    [this] (or (and @up-cell (soft-ref-get @up-cell))
+                    (let [left-cell (left this)
+                          cell (BinomCellImpl.
+                                 (if left-cell (+' value @left-cell) 1)
+                                 (inc n) k
+                                 this left-cell (atom nil) (atom nil))]
+                      (swap! up-cell (soft-ref-biulder cell))
+                      (if left-cell (swap! (.next-cell left-cell) (soft-ref-biulder cell)))
+                      cell)))
+  (next  [this] (or (and @next-cell (soft-ref-get @next-cell))
+                    (let [right-cell (right this)
+                          cell (BinomCellImpl.
+                                 (if right-cell (+' value @right-cell) 1)
+                                 (inc n) (inc k)
+                                 right-cell this (atom nil) (atom nil))]
+                      (swap! next-cell (soft-ref-biulder cell))
+                      (if right-cell (swap! (.up-cell right-cell) (soft-ref-biulder cell)))
+                      cell)))
+)
 
-(def binom-cell-2-1
-     (let [cell1-0 (BinomCellImpl. 1 1 0 nil nil (atom nil) (atom nil)) 
-           cell1-1 (BinomCellImpl. 1 1 1 nil nil (atom nil) (atom nil))
-           cell2-1 (BinomCellImpl. 2 2 1 cell1-1 cell1-0 (atom nil) (atom nil))]
-       (next! cell1-0 cell2-1)
-       (up!   cell1-1 cell2-1)
-       cell2-1))
+(def binom-cell-1-0 (BinomCellImpl.
+                        1 1 0
+                        nil nil
+                        (atom nil) (atom nil)))
+(def binom-cell-1-1 (BinomCellImpl.
+                        1 1 1
+                        nil nil
+                        (atom nil) (atom nil)))
+(def binom-cell-2-1 (up binom-cell-1-1))
+(comment def binom-cell-2-1 (BinomCellImpl.
+                      2 2 1
+                      (BinomCellImpl.
+                        1 1 1
+                        nil nil
+                        (atom ((soft-ref-biulder binom-cell-2-1))) (atom nil))
+                      (BinomCellImpl.
+                        1 1 0
+                        nil nil
+                        (atom nil) (atom ((soft-ref-biulder binom-cell-2-1))))
+                      (atom nil) (atom nil)))
 
 (defn binom
   "Returns a cell from Pascal's triangle at the given row and position."
