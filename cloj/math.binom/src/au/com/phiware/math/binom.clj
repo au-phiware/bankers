@@ -36,13 +36,19 @@
              (left  [_] nil)
              (right [_] nil))
 
-(defn seq [f c] (cons @c (lazy-seq (let [d (f c)] (if d (seq f d))))))
+(declare binom binom-cell-1-0 binom-cell-1-1 binom-cell-2-1)
 
-(defn soft-ref-biulder [cell] (fn [& _] (java.lang.ref.SoftReference. cell)))
-(defn soft-ref-get [o] (.get o))
-;(defn soft-ref-biulder [cell] (constantly cell)) (defn soft-ref-get [o] o)
+(defn seq
+  ([]
+   (concat [binom-cell-1-0 binom-cell-1-1] (lazy-seq (seq binom-cell-2-1))))
+  ([cell]
+   (cons cell (lazy-seq (seq (or (right cell) (binom (inc (row cell)) 0))))))
+  ([f c]
+   (cons @c (lazy-seq (let [d (f c)] (if d (seq f d)))))))
 
-(declare binom-cell-1-0 binom-cell-1-1 binom-cell-2-1)
+(defn- soft-ref-biulder [cell] (fn [& _] (java.lang.ref.SoftReference. cell)))
+(defn- soft-ref-get [o] (.get o))
+;(defn- soft-ref-biulder [cell] (constantly cell)) (defn- soft-ref-get [o] o)
 
 (deftype BinomCellImpl [value n k down-cell back-cell up-cell next-cell]
   IDeref
@@ -93,17 +99,6 @@
                         nil nil
                         (atom nil) (atom nil)))
 (def binom-cell-2-1 (up binom-cell-1-1))
-(comment def binom-cell-2-1 (BinomCellImpl.
-                      2 2 1
-                      (BinomCellImpl.
-                        1 1 1
-                        nil nil
-                        (atom ((soft-ref-biulder binom-cell-2-1))) (atom nil))
-                      (BinomCellImpl.
-                        1 1 0
-                        nil nil
-                        (atom nil) (atom ((soft-ref-biulder binom-cell-2-1))))
-                      (atom nil) (atom nil)))
 
 (defn binom
   "Returns a cell from Pascal's triangle at the given row and position."
