@@ -1,9 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
+
 /*
  * Bit string length (specified in program args).
  */
 static unsigned int length;
+
 /*
  * Print binary representation of b.
  * Use `.' instead of `0' for readability.
@@ -20,6 +22,7 @@ void output (unsigned int b)
     }
     printf("\n");
 }
+
 /*
  * Compute the binomial coefficient of `n choose k'.
  * Use the fact that binom(n, k) = binom(n, n - k).
@@ -28,8 +31,6 @@ void output (unsigned int b)
  */
 unsigned int choose (unsigned int n, unsigned int k) {
     static unsigned int *quick;
-    if (n < 0 || k < 0 || k > n)
-        return -1;
     if (n == 0)
         return 0;
     if (n == k || k == 0)
@@ -46,6 +47,7 @@ unsigned int choose (unsigned int n, unsigned int k) {
 
     return quick[i];
 }
+
 /*
  * Returns the Banker's number at the specified position, a.
  * Derived from the recursive bit flip method.
@@ -72,6 +74,7 @@ unsigned int compute (unsigned int a)
 
     return b;
 }
+
 /*
  * Returns the position of the specified Banker's number, b.
  * The ones contribute \sum_{i=0}^{c-1}{\binom{n}{i}}.
@@ -94,6 +97,7 @@ unsigned int inverse (unsigned int b) {
 
     return a;
 }
+
 /*
  * Recursive function
  */
@@ -106,13 +110,14 @@ unsigned int next (unsigned int b)
         z++, i <<= 1;
     if (i < max) {
         b &= ~i;
-        i = ~((1 << z + y + 1) - 1);
+        i = ~((1 << (z + y + 1)) - 1);
     }
     b &= i;
-    i = (1 << y + z) - (1 << z - 1);
+    i = (1 << (y + z)) - (1 << (z - 1));
     b |= i;
     return b & max - 1;
 }
+
 /* 
  * Main program accepts one parameter: the number of bits
  * in the bit string.
