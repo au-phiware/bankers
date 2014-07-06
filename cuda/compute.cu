@@ -6,33 +6,57 @@
 // CUDA runtime
 #include <cuda_runtime.h>
 
-#define choke(ERR, EXIT, MSG, ...)          \
-{   ERR = __VA_ARGS__;                      \
+#define choke(ERR, EXIT, STMT, ...)         \
+{   ERR = STMT;                             \
     if (ERR != cudaSuccess) {               \
-        fprintf(stderr,                     \
-                "Failed to " MSG ": %s.\n", \
+        fprintf(stderr, "Failed to ");      \
+        fprintf(stderr, __VA_ARGS__);       \
+        fprintf(stderr, ": %s.\n",          \
                 cudaGetErrorString(ERR));   \
         if (EXIT) exit(EXIT);               \
 }   }
-#define ulsize(S) ((S) * sizeof(unsigned long))
 
-#define SEP "\n"
+#ifndef SEP
+#define SEP " "
+#endif
+
+// CUDA Capability v1.1 can only handle 32bit numbers
+// with atomicAdd
+// length <= sizeof(banker_t) && length <= COUNT_MAX
+#ifndef length
 #define length 64
-#define setBit(B) (B |= (1ul << (length - 1)))
-#define rowOffset(X) (((X) * ((X) + 1)) / 2 - 1)
+#endif
+#if length > 32
+// don't exceed 2^sizeof(count_t) bit length
+typedef unsigned long long int banker_t;
+typedef unsigned char count_t;
+#define FMT "%llU"
+#define setBit(B) (B |= (1ull << (length - 1)))
+#else
+// (don't exceed 2^sizeof(count_t) bit length)
+typedef unsigned int banker_t;
+typedef unsigned char count_t;
+#define FMT "%u"
+#define setBit(B) (B |= (1 << (length - 1)))
+#endif
+
+// binomial coeffiecient function
+// (indexes into the binom table aka Pascal's triangle)
 #define choose(N, C) binom[rowOffset(N) + (C)]
+// Index of the Xth row of the binom table
+#define rowOffset(X) (((X) * ((X) + 1)) / 2 - 1)
 
 int threads = 256;
-__constant__ unsigned long binom[rowOffset(length + 1)];
+__constant__ banker_t binom[rowOffset(length + 1)];
 
-__global__ void compute (unsigned long* a)
+__global__ void compute (banker_t* a)
 {
     int i = blockDim.x * blockIdx.x + threadIdx.x;
     if (a[i] == 0) return;
 
-    unsigned long b = 0;
+    banker_t b = 0;
     unsigned int c = 1, n = length, j = rowOffset(length);
-    unsigned long e = a[i] - 1;
+    banker_t e = a[i] - 1;
 
     while (binom[j + 1] <= e) {
         ++j, ++c;
@@ -51,9 +75,9 @@ __global__ void compute (unsigned long* a)
     a[i] = b;
 }
 
-__global__ void binom_kernel(unsigned long *table, const int n)
+__global__ void binom_kernel(banker_t *table, const int n)
 {
-    __shared__ unsigned long cache[0x100];
+    __shared__ banker_t cache[0x100];
     int col = blockDim.x * blockIdx.x + threadIdx.x;
 
     for (int row = 1; row <= n; row++) {
@@ -70,30 +94,35 @@ __global__ void binom_kernel(unsigned long *table, const int n)
 void initBinomTable()
 {
     cudaError_t err = cudaSuccess;
-    size_t size = ulsize(rowOffset(length + 1));
-    unsigned long *hbinom = (unsigned long *)malloc(size);
-    unsigned long *dbinom = NULL;
+    size_t size = (rowOffset(length + 1)) * sizeof(banker_t);
+    banker_t *hbinom = (banker_t *)malloc(size);
+    banker_t *dbinom = NULL;
 
     if (hbinom == NULL) {
         fprintf(stderr, "Failed to allocate host binom table!\n");
         exit(EXIT_FAILURE);
     }
 
-    choke(err, EXIT_FAILURE, "allocate device binom table",
-            cudaMalloc((void **)&dbinom, size));
+    choke(err, EXIT_FAILURE,
+            cudaMalloc((void **)&dbinom, size),
+            "allocate device binom table");
 
     binom_kernel<<<1, length + 1>>>(dbinom, length);
-    choke(err, EXIT_FAILURE, "launch binom kernel",
-            cudaGetLastError());
+    choke(err, EXIT_FAILURE,
+            cudaGetLastError(),
+            "launch binom kernel");
 
-    choke(err, EXIT_FAILURE, "copy binom table from device to host",
-            cudaMemcpy(hbinom, dbinom, size, cudaMemcpyDeviceToHost));
+    choke(err, EXIT_FAILURE,
+            cudaMemcpy(hbinom, dbinom, size, cudaMemcpyDeviceToHost),
+            "copy binom table from device to host");
 
-    choke(err, EXIT_FAILURE, "free device binom table",
-            cudaFree(dbinom));
+    choke(err, EXIT_FAILURE,
+            cudaFree(dbinom),
+            "free device binom table");
 
-    choke(err, EXIT_FAILURE, "copy binom table from host to device (constant memory)",
-            cudaMemcpyToSymbol(binom, hbinom, size));
+    choke(err, EXIT_FAILURE,
+            cudaMemcpyToSymbol(binom, hbinom, size),
+            "copy binom table from host to device (constant memory)");
 
     free(hbinom);
 }
@@ -101,9 +130,9 @@ void initBinomTable()
 /*
  * Parse command line arguments
  */
-int parse(int argc, char ** argv, unsigned long * input)
+int parse(int argc, char ** argv, banker_t * input)
 {
-    unsigned long x;
+    banker_t x;
     int skip = 1;
 
     if (argc < 2)
@@ -133,8 +162,8 @@ int main (int argc, char ** argv)
 {
     cudaError_t err = cudaSuccess;
     int blocks, asize, size = argc - 1;
-    unsigned long *harray = (unsigned long *)malloc(ulsize(size));
-    unsigned long *darray = NULL;
+    banker_t *harray = (banker_t *)malloc(size * sizeof(banker_t));
+    banker_t *darray = NULL;
 
     initBinomTable();
 
@@ -147,35 +176,42 @@ int main (int argc, char ** argv)
     blocks = (size + threads - 1) / threads;
     asize = blocks * size;
 
-    choke(err, EXIT_FAILURE, "allocate device array",
-            cudaMalloc((void **)&darray, ulsize(asize)));
+    choke(err, EXIT_FAILURE,
+            cudaMalloc((void **)&darray, asize * sizeof(banker_t)),
+            "allocate device array");
 
-    choke(err, EXIT_FAILURE, "initialise device array",
-            cudaMemset(darray, 0, ulsize(asize)));
+    choke(err, EXIT_FAILURE,
+            cudaMemset(darray, 0, asize * sizeof(banker_t)),
+            "initialise device array");
 
-    choke(err, EXIT_FAILURE, "copy array from host to device",
-            cudaMemcpy(darray, harray, ulsize(size), cudaMemcpyHostToDevice));
+    choke(err, EXIT_FAILURE,
+            cudaMemcpy(darray, harray, size * sizeof(banker_t), cudaMemcpyHostToDevice),
+            "copy array from host to device");
 
     compute<<<blocks, threads>>>(darray);
-    choke(err, EXIT_FAILURE, "launch compute kernel",
-            cudaGetLastError());
+    choke(err, EXIT_FAILURE,
+            cudaGetLastError(),
+            "launch compute kernel");
 
-    choke(err, EXIT_FAILURE, "copy array from device to host",
-            cudaMemcpy(harray, darray, ulsize(size), cudaMemcpyDeviceToHost));
+    choke(err, EXIT_FAILURE,
+            cudaMemcpy(harray, darray, size * sizeof(banker_t), cudaMemcpyDeviceToHost),
+            "copy array from device to host");
 
-    choke(err, EXIT_FAILURE, "free device array",
-            cudaFree(darray));
+    choke(err, EXIT_FAILURE,
+            cudaFree(darray),
+            "free device array");
 
-    printf("%lU", *harray);
+    printf(FMT, *harray);
     for(int i = 1; i < size; i++) {
-        printf(SEP "%lU", harray[i]);
+        printf(SEP FMT, harray[i]);
     }
     printf("\n");
-    
+
     free(harray);
 
-    choke(err, EXIT_FAILURE, "deinitialize the device",
-            cudaDeviceReset());
+    choke(err, EXIT_FAILURE,
+            cudaDeviceReset(),
+            "deinitialize the device");
 
     return 0;
 }

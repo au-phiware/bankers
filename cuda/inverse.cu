@@ -6,20 +6,26 @@
 // CUDA runtime
 #include <cuda_runtime.h>
 
-#define choke(ERR, EXIT, MSG, ...)          \
-{   ERR = __VA_ARGS__;                      \
+#define choke(ERR, EXIT, STMT, ...)         \
+{   ERR = STMT;                             \
     if (ERR != cudaSuccess) {               \
-        fprintf(stderr,                     \
-                "Failed to " MSG ": %s.\n", \
+        fprintf(stderr, "Failed to ");      \
+        fprintf(stderr, __VA_ARGS__);       \
+        fprintf(stderr, ": %s.\n",          \
                 cudaGetErrorString(ERR));   \
         if (EXIT) exit(EXIT);               \
 }   }
 
+#ifndef SEP
+#define SEP " "
+#endif
+
 // CUDA Capability v1.1 can only handle 32bit numbers
 // with atomicAdd
 // length <= sizeof(banker_t) && length <= COUNT_MAX
+#ifndef length
 #define length 64
-
+#endif
 #if length > 32
 // don't exceed 2^sizeof(count_t) bit length
 typedef unsigned long long int banker_t;
@@ -32,7 +38,6 @@ typedef unsigned char count_t;
 #define FMT "%u"
 #endif
 
-#define SEP "\n"
 #define sharedMemorySize (0x4000 - 0x10)
 // binomial coeffiecient function
 // (indexes into the binom table aka Pascal's triangle)
@@ -86,12 +91,13 @@ __global__ void inverse (banker_t* io)
 #if length > 32 && __CUDA_ARCH__ < 120
     if (y == 0) {
         banker_t a = 0;
-        count_t *c_y = &count[threadIdx.x][y];
-        for (i = 1; (b & i || *c_y < c) && y < length; y++, c_y++, i <<= 1)
+        unsigned int n = length;
+
+        for (i = 1; n-- && c > 0; i <<= 1)
             if (b & i)
-                a += choose(length, *c_y - 1);
+                --c, a += choose(length, c);
             else
-                a += choose(length - y - 1, c - *c_y - 1);
+                a += choose(n, c - 1);
 
         io[x] = a;
     }
@@ -100,9 +106,9 @@ __global__ void inverse (banker_t* io)
     count_t c_y = count[threadIdx.x][y];
 
     if (b & (1 << y))
-        atomicadd(io + x, choose(length, c_y - 1));
+        atomicAdd(io + x, choose(length, c_y - 1));
     else if (c_y < c)
-        atomicadd(io + x, choose(length - y - 1, c - c_y - 1));
+        atomicAdd(io + x, choose(length - y - 1, c - c_y - 1));
 #endif
 }
 
@@ -159,39 +165,48 @@ int main (int argc, char ** argv)
     blocks = (size + threads - 1) / threads;
     asize = blocks * size;
 
-    choke(err, EXIT_FAILURE, "allocate device array",
-            cudaMalloc((void **)&darray, asize * sizeof(banker_t)));
+    choke(err, EXIT_FAILURE,
+            cudaMalloc((void **)&darray, asize * sizeof(banker_t)),
+            "allocate device array of %zu bytes",
+            asize * sizeof(banker_t));
 
-    choke(err, EXIT_FAILURE, "initialise device array",
-            cudaMemset(darray, 0, asize * sizeof(banker_t)));
+    choke(err, EXIT_FAILURE,
+            cudaMemset(darray, 0, asize * sizeof(banker_t)),
+            "initialise device array");
 
-    choke(err, EXIT_FAILURE, "copy array from host to device",
-            cudaMemcpy(darray, harray, size * sizeof(banker_t), cudaMemcpyHostToDevice));
+    choke(err, EXIT_FAILURE,
+            cudaMemcpy(darray, harray, size * sizeof(banker_t), cudaMemcpyHostToDevice),
+            "copy array from host to device");
 
     dim3 t (threads, length);
     inverse<<<blocks, t>>>(darray);
-    choke(err, EXIT_FAILURE, "launch inverse kernel",
-            cudaGetLastError());
+    choke(err, EXIT_FAILURE,
+            cudaGetLastError(),
+            "launch inverse kernel");
 
-    choke(err, EXIT_FAILURE, "complete inverse kernel",
-            cudaThreadSynchronize());
+    choke(err, EXIT_FAILURE,
+            cudaThreadSynchronize(),
+            "complete inverse kernel");
 
-    choke(err, EXIT_FAILURE, "copy array from device to host",
-            cudaMemcpy(harray, darray, size * sizeof(banker_t), cudaMemcpyDeviceToHost));
+    choke(err, EXIT_FAILURE,
+            cudaMemcpy(harray, darray, size * sizeof(banker_t), cudaMemcpyDeviceToHost),
+            "copy array from device to host");
 
-    choke(err, EXIT_FAILURE, "free device array",
-            cudaFree(darray));
+    choke(err, EXIT_FAILURE,
+            cudaFree(darray),
+            "free device array");
 
     printf(FMT, *harray);
     for(int i = 1; i < size; i++) {
         printf(SEP FMT, harray[i]);
     }
     printf("\n");
-    
+
     free(harray);
 
-    choke(err, EXIT_FAILURE, "deinitialize the device",
-            cudaDeviceReset());
+    choke(err, EXIT_FAILURE,
+            cudaDeviceReset(),
+            "deinitialize the device");
 
     return 0;
 }
