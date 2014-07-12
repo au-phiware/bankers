@@ -47,8 +47,11 @@ typedef unsigned char count_t;
 #define rowOffset(X) (((((X) + 1) * ((X) + 1)) / 4) - 1)
 // Maximum number of inputs per block with the available sharedMemorySize
 #define maxBlockWidth (((sharedMemorySize - sizeof(banker_t) * rowOffset(length + 1)) / length) / sizeof(count_t))
+// The block height (y dimension) must be the max width of the binom table
+#define blockHeight (length / 2)
 
-int threads = 256;
+// Total number of threads per block
+int threads = 0;
 
 __global__ void inverse (banker_t* io)
 {
@@ -139,7 +142,9 @@ int parse(int argc, char ** argv, banker_t * input)
     return argc - skip;
 }
 
-void setBestThreadSize() {}
+void setBestThreadSize() {
+    threads = 256;
+}
 
 /*
  * Main program accepts one parameter: the number of the row
@@ -157,13 +162,21 @@ int main (int argc, char ** argv)
         exit(EXIT_FAILURE);
     }
 
+    // Parse argv and return the number of inputs specified by the user
     size = parse(argc, argv, harray);
+    // Find a good number of threads if none explicitly specified by the user
     if (threads < 1) setBestThreadSize();
-    if (threads < length / 2) threads = length / 2;
-    threads /= length;
+    // The height of the block must accomodate the width of the binom table
+    if (threads < blockHeight) threads = blockHeight;
+    // The total number of threads per block must accommodate the count array
     if (threads > maxBlockWidth) threads = maxBlockWidth;
+    // threads must be divisible by the block height
+    if (threads % blockHeight != 0)
+        threads = (threads / blockHeight) * blockHeight;
+    // The number of blocks must cover the input size
     blocks = (size + threads - 1) / threads;
-    asize = blocks * size;
+    // The aligned size (exact multiple of threads)
+    asize = blocks * threads;
 
     choke(err, EXIT_FAILURE,
             cudaMalloc((void **)&darray, asize * sizeof(banker_t)),
@@ -178,7 +191,7 @@ int main (int argc, char ** argv)
             cudaMemcpy(darray, harray, size * sizeof(banker_t), cudaMemcpyHostToDevice),
             "copy array from host to device");
 
-    dim3 t (threads, length);
+    dim3 t (threads / blockHeight, blockHeight);
     inverse<<<blocks, t>>>(darray);
     choke(err, EXIT_FAILURE,
             cudaGetLastError(),
