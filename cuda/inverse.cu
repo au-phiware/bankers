@@ -56,6 +56,10 @@ int threads = 0;
 
 // Debug flag
 int debug = 0;
+// The current device
+int device = 0;
+// Device properties if needed
+cudaDeviceProp *deviceProp = NULL;
 
 __global__ void inverse (banker_t* io)
 {
@@ -141,6 +145,8 @@ int parse(int argc, char ** argv, banker_t ** inputPtr)
             skip = atoi(&argv[i][7]);
         } else if (strncmp("--limit=", argv[i], 8) == 0) {
             limit = atoi(&argv[i][8]);
+        } else if (strncmp("--device", argv[i], 8) == 0) {
+            device = atoi(&argv[i][8]);
         } else if (strncmp("--debug", argv[i], 7) == 0) {
             debug = 1;
         } else {
@@ -165,8 +171,46 @@ int parse(int argc, char ** argv, banker_t ** inputPtr)
     return i - skip;
 }
 
+void setDevice() {
+    cudaError_t err = cudaSuccess;
+    if (device == 0) {
+        choke(err, EXIT_FAILURE,
+                cudaGetDevice(&device),
+                "get current device");
+        debugf("Got current device, %d.\n", device);
+    } else {
+        int d;
+        choke(err, EXIT_FAILURE,
+                cudaGetDevice(&d),
+                "get current device");
+        debugf("Got current device, %d.\n", d);
+        if (d != device) {
+            choke(err, EXIT_FAILURE,
+                    cudaSetDevice(device),
+                    "set current device to %d", device);
+            debugf("Set current device to %d.\n", device);
+        }
+    }
+}
+
+void getDeviceProperties() {
+    cudaError_t err = cudaSuccess;
+    if (deviceProp == NULL) {
+        deviceProp = (cudaDeviceProp *)malloc(sizeof(cudaDeviceProp));
+        choke(err, EXIT_FAILURE,
+                cudaGetDeviceProperties(deviceProp, device),
+                "get device (%d) properties", device);
+    }
+}
+
 void setBestThreadSize() {
-    threads = 256;
+    getDeviceProperties();
+    threads = deviceProp->maxThreadsDim[0];
+    debugf("Setting threads to %d.\n", threads);
+    if (deviceProp->maxThreadsPerBlock / blockHeight < threads / blockHeight) {
+        threads = deviceProp->maxThreadsPerBlock;
+        debugf("Setting threads to %d since maxThreadsPerBlock=%d.\n", threads, deviceProp->maxThreadsPerBlock);
+    }
 }
 
 /*
@@ -186,15 +230,22 @@ int main (int argc, char ** argv)
         fprintf(stderr, "Failed to allocate host array!\n");
         exit(EXIT_FAILURE);
     }
+    setDevice();
 
     // Find a good number of threads if none explicitly specified by the user
     if (threads < 1) setBestThreadSize();
     // The height of the block must accomodate the width of the binom table
-    if (threads < blockHeight) threads = blockHeight;
+    if (threads < blockHeight) {
+        threads = blockHeight;
+        debugf("Setting threads to %d since it must be at least the width of the binom table (%d).\n", threads, blockHeight);
+    }
     // threads must be divisible by the block height
     threads /= blockHeight;
     // The total number of threads per block must fit available shared memory
-    if (threads > maxBlockWidth) threads = maxBlockWidth;
+    if (threads > maxBlockWidth) {
+        threads = maxBlockWidth;
+        debugf("Setting threads to %d due to the available shared memory (%d bytes).\n", threads, sharedMemorySize);
+    }
     // The number of blocks must cover the input size
     blocks = (size + threads - 1) / threads;
     // The aligned size (exact multiple of threads)
@@ -240,6 +291,7 @@ int main (int argc, char ** argv)
     printf("\n");
 
     free(harray);
+    free(deviceProp);
 
     choke(err, EXIT_FAILURE,
             cudaDeviceReset(),

@@ -19,6 +19,10 @@
 
 // Debug flag
 int debug = 0;
+// The current device
+int device = 0;
+// Device properties if needed
+cudaDeviceProp *deviceProp = NULL;
 
 #ifndef SEP
 #define SEP "\n"
@@ -50,7 +54,7 @@ typedef unsigned char count_t;
 // Index of the Xth row of the binom table
 #define rowOffset(X) (((X) * ((X) + 1)) / 2 - 1)
 
-int threads = 256;
+int threads = 0;
 __constant__ banker_t binom[rowOffset(length + 1)];
 
 __global__ void compute (banker_t* a)
@@ -154,6 +158,8 @@ int parse(int argc, char ** argv, banker_t ** inputPtr)
             skip = atoi(&argv[i][7]);
         } else if (strncmp("--limit=", argv[i], 8) == 0) {
             limit = atoi(&argv[i][8]);
+        } else if (strncmp("--device", argv[i], 8) == 0) {
+            device = atoi(&argv[i][8]);
         } else if (strncmp("--debug", argv[i], 7) == 0) {
             debug = 1;
         } else {
@@ -178,6 +184,39 @@ int parse(int argc, char ** argv, banker_t ** inputPtr)
     return i - skip;
 }
 
+void setDevice() {
+    cudaError_t err = cudaSuccess;
+    if (device == 0) {
+        choke(err, EXIT_FAILURE,
+                cudaGetDevice(&device),
+                "get current device");
+    } else {
+        int d;
+        choke(err, EXIT_FAILURE,
+                cudaGetDevice(&d),
+                "get current device");
+        if (d != device)
+            choke(err, EXIT_FAILURE,
+                    cudaSetDevice(device),
+                    "set current device to %d", device);
+    }
+}
+
+void getDeviceProperties() {
+    cudaError_t err = cudaSuccess;
+    if (deviceProp == NULL) {
+        deviceProp = (cudaDeviceProp *)malloc(sizeof(cudaDeviceProp));
+        choke(err, EXIT_FAILURE,
+                cudaGetDeviceProperties(deviceProp, device),
+                "get device (%d) properties", device);
+    }
+}
+
+void setBestThreadSize() {
+    getDeviceProperties();
+    threads = deviceProp->maxThreadsDim[0];
+}
+
 /*
  * Main program accepts one parameter: the number of the row
  * of Pascal's triangle to print.
@@ -196,6 +235,9 @@ int main (int argc, char ** argv)
         fprintf(stderr, "Failed to allocate host array!\n");
         exit(EXIT_FAILURE);
     }
+    setDevice();
+    if (threads < 1)
+        setBestThreadSize();
 
     blocks = (size + threads - 1) / threads;
     asize = blocks * threads;
@@ -234,6 +276,7 @@ int main (int argc, char ** argv)
     printf("\n");
 
     free(harray);
+    free(deviceProp);
 
     choke(err, EXIT_FAILURE,
             cudaDeviceReset(),
