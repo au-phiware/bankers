@@ -191,11 +191,10 @@ int main (int argc, char ** argv)
     if (threads < 1) setBestThreadSize();
     // The height of the block must accomodate the width of the binom table
     if (threads < blockHeight) threads = blockHeight;
-    // The total number of threads per block must accommodate the count array
-    if (threads > maxBlockWidth) threads = maxBlockWidth;
     // threads must be divisible by the block height
-    if (threads % blockHeight != 0)
-        threads = (threads / blockHeight) * blockHeight;
+    threads /= blockHeight;
+    // The total number of threads per block must fit available shared memory
+    if (threads > maxBlockWidth) threads = maxBlockWidth;
     // The number of blocks must cover the input size
     blocks = (size + threads - 1) / threads;
     // The aligned size (exact multiple of threads)
@@ -215,8 +214,8 @@ int main (int argc, char ** argv)
             "copy array from host to device");
 
     debugf("Launching %d block%s of %d by %d threads...\n",
-                blocks, blocks == 1 ? "" : "s", threads / blockHeight, blockHeight);
-    dim3 t (threads / blockHeight, blockHeight);
+                blocks, blocks == 1 ? "" : "s", threads, blockHeight);
+    dim3 t (threads, blockHeight);
     inverse<<<blocks, t>>>(darray);
     choke(err, EXIT_FAILURE,
             cudaGetLastError(),
