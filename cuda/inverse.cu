@@ -15,9 +15,10 @@
                 cudaGetErrorString(ERR));   \
         if (EXIT) exit(EXIT);               \
 }   }
+#define debugf(...) if (debug) fprintf(stderr, __VA_ARGS__)
 
 #ifndef SEP
-#define SEP " "
+#define SEP "\n"
 #endif
 
 // CUDA Capability v1.1 can only handle 32bit numbers
@@ -52,6 +53,9 @@ typedef unsigned char count_t;
 
 // Total number of threads per block
 int threads = 0;
+
+// Debug flag
+int debug = 0;
 
 __global__ void inverse (banker_t* io)
 {
@@ -115,31 +119,50 @@ __global__ void inverse (banker_t* io)
 #endif
 }
 
+void usage(char *argv) {
+    printf("Usage: %s [--threads=count] [--skip=n] [--limit=m]\n", argv);
+    exit(1);
+}
+
 /*
  * Parse command line arguments
  */
-int parse(int argc, char ** argv, banker_t * input)
+int parse(int argc, char ** argv, banker_t ** inputPtr)
 {
     banker_t x;
-    int skip = 1;
+    unsigned int i, skip = 0, limit = 0;
+    char *line = NULL;
+    size_t n = 0;
 
-    if (argc < 2)
-    {
-        printf("Usage: %s [-threads=count] n ...\n", argv[0]);
-        exit(1);
-    }
-
-    for (int i = 1; i < argc; i++) {
-        if (strncmp("-threads=", argv[i], 9) == 0) {
-            skip++;
-            threads = atoi(&argv[i][9]);
+    for (i = 1; i < argc; i++) {
+        if (strncmp("--threads=", argv[i], 10) == 0) {
+            threads = atoi(&argv[i][10]);
+        } else if (strncmp("--skip=", argv[i], 7) == 0) {
+            skip = atoi(&argv[i][7]);
+        } else if (strncmp("--limit=", argv[i], 8) == 0) {
+            limit = atoi(&argv[i][8]);
+        } else if (strncmp("--debug", argv[i], 7) == 0) {
+            debug = 1;
         } else {
-            x = (banker_t) strtoull(argv[i], NULL, 10);
-            input[i - skip] = x;
+            usage(*argv);
         }
     }
+    for (i = 0; (limit == 0 || i < limit + skip) && getline(&line, &n, stdin) != -1; i++) {
+        x = (banker_t) strtoull(line, NULL, 10);
+        if (i >= skip) {
+            if (((i - skip) % 0x100) == 0) {
+                *inputPtr = (banker_t *)realloc(*inputPtr, (i - skip + 0x100) * sizeof(banker_t));
+                if (*inputPtr == NULL) {
+                    fprintf(stderr, "Failed to (re)allocate host array!\n");
+                    exit(EXIT_FAILURE);
+                }
+            }
+            (*inputPtr)[i - skip] = x;
+        }
+    }
+    if (line) free(line);
 
-    return argc - skip;
+    return i - skip;
 }
 
 void setBestThreadSize() {
@@ -154,16 +177,16 @@ int main (int argc, char ** argv)
 {
     cudaError_t err = cudaSuccess;
     int blocks, asize, size = argc - 1;
-    banker_t *harray = (banker_t *)malloc(size * sizeof(banker_t));
+    banker_t *harray = NULL;
     banker_t *darray = NULL;
 
+    // Parse argv and return the number of inputs specified by the user
+    size = parse(argc, argv, &harray);
     if (harray == NULL) {
         fprintf(stderr, "Failed to allocate host array!\n");
         exit(EXIT_FAILURE);
     }
 
-    // Parse argv and return the number of inputs specified by the user
-    size = parse(argc, argv, harray);
     // Find a good number of threads if none explicitly specified by the user
     if (threads < 1) setBestThreadSize();
     // The height of the block must accomodate the width of the binom table
@@ -191,6 +214,8 @@ int main (int argc, char ** argv)
             cudaMemcpy(darray, harray, size * sizeof(banker_t), cudaMemcpyHostToDevice),
             "copy array from host to device");
 
+    debugf("Launching %d block%s of %d by %d threads...\n",
+                blocks, blocks == 1 ? "" : "s", threads / blockHeight, blockHeight);
     dim3 t (threads / blockHeight, blockHeight);
     inverse<<<blocks, t>>>(darray);
     choke(err, EXIT_FAILURE,
