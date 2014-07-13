@@ -9,13 +9,14 @@
 #define choke(ERR, EXIT, STMT, ...)         \
 {   ERR = STMT;                             \
     if (ERR != cudaSuccess) {               \
+        fprintf(stderr, "compute: ");       \
         fprintf(stderr, "Failed to ");      \
         fprintf(stderr, __VA_ARGS__);       \
         fprintf(stderr, ": %s.\n",          \
                 cudaGetErrorString(ERR));   \
         if (EXIT) exit(EXIT);               \
 }   }
-#define debugf(...) if (debug) fprintf(stderr, __VA_ARGS__)
+#define debugf(...) if (debug) fprintf(stderr, "compute: " __VA_ARGS__)
 
 // Debug flag
 int debug = 0;
@@ -54,7 +55,11 @@ typedef unsigned char count_t;
 // Index of the Xth row of the binom table
 #define rowOffset(X) (((X) * ((X) + 1)) / 2 - 1)
 
+// Total number of threads per block
 int threads = 0;
+// Maximum size that can be allocated or processed on device
+int maxInputArraySize = 0;
+
 __constant__ banker_t binom[rowOffset(length + 1)];
 
 __global__ void compute (banker_t* a)
@@ -111,9 +116,17 @@ void initBinomTable()
         exit(EXIT_FAILURE);
     }
 
-    choke(err, EXIT_FAILURE,
+    choke(err, 0,
             cudaMalloc((void **)&dbinom, size),
             "allocate device binom table");
+    if (err != cudaSuccess) {
+        size_t memFree, memTot;
+        choke(err, EXIT_FAILURE,
+                cudaMemGetInfo(&memFree, &memTot),
+                "get device memory information");
+        debugf("Available device memory is %zu bytes.\n", memFree);
+        exit(EXIT_FAILURE);
+    }
 
     debugf("Launching a block of %d threads...\n", length + 1);
     binom_kernel<<<1, length + 1>>>(dbinom, length);
@@ -134,54 +147,6 @@ void initBinomTable()
             "copy binom table from host to device (constant memory)");
 
     free(hbinom);
-}
-
-void usage(char *argv) {
-    printf("Usage: %s [--threads=count] [--skip=n] [--limit=m]\n", argv);
-    exit(1);
-}
-
-/*
- * Parse command line arguments
- */
-int parse(int argc, char ** argv, banker_t ** inputPtr)
-{
-    banker_t x;
-    unsigned int i, skip = 0, limit = 0;
-    char *line = NULL;
-    size_t n = 0;
-
-    for (i = 1; i < argc; i++) {
-        if (strncmp("--threads=", argv[i], 10) == 0) {
-            threads = atoi(&argv[i][10]);
-        } else if (strncmp("--skip=", argv[i], 7) == 0) {
-            skip = atoi(&argv[i][7]);
-        } else if (strncmp("--limit=", argv[i], 8) == 0) {
-            limit = atoi(&argv[i][8]);
-        } else if (strncmp("--device", argv[i], 8) == 0) {
-            device = atoi(&argv[i][8]);
-        } else if (strncmp("--debug", argv[i], 7) == 0) {
-            debug = 1;
-        } else {
-            usage(*argv);
-        }
-    }
-    for (i = 0; (limit == 0 || i < limit + skip) && getline(&line, &n, stdin) != -1; i++) {
-        x = (banker_t) strtoull(line, NULL, 10);
-        if (i >= skip) {
-            if (((i - skip) % 0x100) == 0) {
-                *inputPtr = (banker_t *)realloc(*inputPtr, (i - skip + 0x100) * sizeof(banker_t));
-                if (*inputPtr == NULL) {
-                    fprintf(stderr, "Failed to (re)allocate host array!\n");
-                    exit(EXIT_FAILURE);
-                }
-            }
-            (*inputPtr)[i - skip] = x;
-        }
-    }
-    if (line) free(line);
-
-    return i - skip;
 }
 
 void setDevice() {
@@ -217,6 +182,69 @@ void setBestThreadSize() {
     threads = deviceProp->maxThreadsDim[0];
 }
 
+void setMaxInputArraySize() {
+    if (maxInputArraySize == 0) {
+        cudaError_t err = cudaSuccess;
+        size_t memFree, memTot;
+        setDevice();
+
+        choke(err, EXIT_FAILURE,
+                cudaMemGetInfo(&memFree, &memTot),
+                "get device memory information");
+        maxInputArraySize = memFree / sizeof(banker_t) / 2; // Don't be greedy, take half
+        debugf("Setting maxInputArraySize to %d with available device memory at %zu bytes.\n", maxInputArraySize, memFree);
+    }
+}
+
+void usage(char *argv) {
+    printf("Usage: %s [--threads=count] [--skip=n] [--limit=m]\n", argv);
+    exit(1);
+}
+
+/*
+ * Parse command line arguments
+ */
+int parse(int argc, char ** argv, banker_t ** inputPtr, int offset)
+{
+    banker_t x;
+    unsigned int i, skip = 0, limit = 0;
+    char *line = NULL;
+    size_t n = 0;
+
+    for (i = 1; i < argc; i++) {
+        if (strncmp("--threads=", argv[i], 10) == 0) {
+            threads = atoi(&argv[i][10]);
+        } else if (strncmp("--skip=", argv[i], 7) == 0 && offset == 0) {
+            skip = atoi(&argv[i][7]);
+        } else if (strncmp("--limit=", argv[i], 8) == 0) {
+            limit = atoi(&argv[i][8]);
+        } else if (strncmp("--device", argv[i], 8) == 0) {
+            device = atoi(&argv[i][8]);
+        } else if (strncmp("--debug", argv[i], 7) == 0) {
+            debug = 1;
+        } else {
+            usage(*argv);
+        }
+    }
+    setMaxInputArraySize();
+    for (i = 0; (limit == 0 || i < limit - offset + skip) && i < maxInputArraySize && getline(&line, &n, stdin) != -1; i++) {
+        x = (banker_t) strtoull(line, NULL, 10);
+        if (i >= skip) {
+            if (((i - skip) % 0x100) == 0) {
+                *inputPtr = (banker_t *)realloc(*inputPtr, (i - skip + 0x100) * sizeof(banker_t));
+                if (*inputPtr == NULL) {
+                    fprintf(stderr, "Failed to (re)allocate host array!\n");
+                    exit(EXIT_FAILURE);
+                }
+            }
+            (*inputPtr)[i - skip] = x;
+        }
+    }
+    if (line) free(line);
+
+    return i - skip;
+}
+
 /*
  * Main program accepts one parameter: the number of the row
  * of Pascal's triangle to print.
@@ -224,59 +252,68 @@ void setBestThreadSize() {
 int main (int argc, char ** argv)
 {
     cudaError_t err = cudaSuccess;
-    int blocks, asize, size = argc - 1;
+    int blocks, asize, size, done = 0;
     banker_t *harray = NULL;
     banker_t *darray = NULL;
 
     initBinomTable();
 
-    size = parse(argc, argv, &harray);
-    if (harray == NULL) {
-        fprintf(stderr, "Failed to allocate host array!\n");
-        exit(EXIT_FAILURE);
-    }
+    size = parse(argc, argv, &harray, done);
     setDevice();
     if (threads < 1)
         setBestThreadSize();
 
-    blocks = (size + threads - 1) / threads;
-    asize = blocks * threads;
+    do if (size > 0)
+    {
+        if (harray == NULL) {
+            fprintf(stderr, "Failed to allocate host array!\n");
+            exit(EXIT_FAILURE);
+        }
 
-    choke(err, EXIT_FAILURE,
-            cudaMalloc((void **)&darray, asize * sizeof(banker_t)),
-            "allocate device array");
+        blocks = (size + threads - 1) / threads;
+        asize = blocks * threads;
 
-    choke(err, EXIT_FAILURE,
-            cudaMemset(darray, 0, asize * sizeof(banker_t)),
-            "initialise device array");
+        if (darray == NULL)
+            choke(err, EXIT_FAILURE,
+                    cudaMalloc((void **)&darray, asize * sizeof(banker_t)),
+                    "allocate device array");
 
-    choke(err, EXIT_FAILURE,
-            cudaMemcpy(darray, harray, size * sizeof(banker_t), cudaMemcpyHostToDevice),
-            "copy array from host to device");
+        choke(err, EXIT_FAILURE,
+                cudaMemset(darray, 0, asize * sizeof(banker_t)),
+                "initialise device array");
 
-    debugf("Launching %d block%s of %d thread%s...\n",
-                blocks, blocks == 1 ? "" : "s", threads, threads == 1 ? "" : "s");
-    compute<<<blocks, threads>>>(darray);
-    choke(err, EXIT_FAILURE,
-            cudaGetLastError(),
-            "launch compute kernel");
+        choke(err, EXIT_FAILURE,
+                cudaMemcpy(darray, harray, size * sizeof(banker_t), cudaMemcpyHostToDevice),
+                "copy array from host to device");
 
-    choke(err, EXIT_FAILURE,
-            cudaMemcpy(harray, darray, size * sizeof(banker_t), cudaMemcpyDeviceToHost),
-            "copy array from device to host");
+        debugf("Launching %d block%s of %d thread%s...\n",
+                    blocks, blocks == 1 ? "" : "s", threads, threads == 1 ? "" : "s");
+        compute<<<blocks, threads>>>(darray);
+        choke(err, EXIT_FAILURE,
+                cudaGetLastError(),
+                "launch compute kernel");
 
-    choke(err, EXIT_FAILURE,
-            cudaFree(darray),
-            "free device array");
+        choke(err, EXIT_FAILURE,
+                cudaMemcpy(harray, darray, size * sizeof(banker_t), cudaMemcpyDeviceToHost),
+                "copy array from device to host");
 
-    printf(FMT, *harray);
-    for(int i = 1; i < size; i++) {
-        printf(SEP FMT, harray[i]);
-    }
-    printf("\n");
+        printf(FMT, *harray);
+        for(int i = 1; i < size; i++) {
+            printf(SEP FMT, harray[i]);
+        }
+        printf("\n");
 
-    free(harray);
-    free(deviceProp);
+        done += size;
+    } while ((size = parse(argc, argv, &harray, done)) > 0);
+
+    if (darray != NULL)
+        choke(err, EXIT_FAILURE,
+                cudaFree(darray),
+                "free device array");
+    if (harray != NULL)
+        free(harray);
+    if (deviceProp != NULL)
+        free(deviceProp);
 
     choke(err, EXIT_FAILURE,
             cudaDeviceReset(),
