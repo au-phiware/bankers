@@ -198,7 +198,7 @@ int main (int argc, char ** argv)
     }
 
     blocks = (size + threads - 1) / threads;
-    asize = blocks * size;
+    asize = blocks * threads;
 
     choke(err, EXIT_FAILURE,
             cudaMalloc((void **)&darray, asize * sizeof(banker_t)),
