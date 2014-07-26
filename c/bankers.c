@@ -10,7 +10,7 @@ static unsigned int length;
  * Print binary representation of b.
  * Use `.' instead of `0' for readability.
  */
-void output (unsigned int b)
+void output (unsigned long b)
 {
     unsigned int i;
     for (i = 0; i < length; i++) {
@@ -29,8 +29,8 @@ void output (unsigned int b)
  * Use a lookup table (triangle, actually) for speed.
  * Otherwise it's dumb (heart) recursion.
  */
-unsigned int choose (unsigned int n, unsigned int k) {
-    static unsigned int *quick;
+unsigned long choose (unsigned int n, unsigned int k) {
+    static unsigned long *quick;
     if (n == 0)
         return 0;
     if (n == k || k == 0)
@@ -39,7 +39,7 @@ unsigned int choose (unsigned int n, unsigned int k) {
         k = n - k;
 
     if (!quick)
-        quick = calloc((length * (length + 1)) / 4, sizeof(unsigned int));
+        quick = calloc((length * (length + 1)) / 4, sizeof(unsigned long));
 
     unsigned int i = (n * (n - 1)) / 4 + k - 1;
     if (quick[i] == 0)
@@ -52,13 +52,14 @@ unsigned int choose (unsigned int n, unsigned int k) {
  * Returns the Banker's number at the specified position, a.
  * Derived from the recursive bit flip method.
  */
-unsigned int compute (unsigned int a)
+unsigned long compute (unsigned long a)
 {
-    unsigned int b = 0;
+    unsigned long b = 0;
     if (a == 0)
         return b;
 
-    unsigned int c = 0, e = a, n = length, binom;
+    unsigned int c = 0, n = length;
+    unsigned long e = a, binom;
     binom = choose(n, c);
     do {
         e -= binom;
@@ -85,8 +86,9 @@ unsigned int compute (unsigned int a)
  *   c_i is the cardinality up to bit i, and
  *   i is the position of the zero in the string.
  */
-unsigned int inverse (unsigned int b) {
-    unsigned int a = 0, c = 0, i = 1, n = length;
+unsigned long inverse (unsigned long b) {
+    unsigned int c = 0, n = length;
+    unsigned long a = 0, i = 1;
     for (; i <= b; i <<= 1)
         if (b & i) c++;
     for (i = 1 << (n - 1); i > 0 && c > 0; --n, i >>= 1)
@@ -101,9 +103,10 @@ unsigned int inverse (unsigned int b) {
 /*
  * Recursive function
  */
-unsigned int next (unsigned int b)
+unsigned long next (unsigned long b)
 {
-    unsigned int z = 0, y = 0, i = 1, max = 1 << length;
+    unsigned int z = 0, y = 0;
+    unsigned long i = 1, max = 1 << length;
     while (i < max && b & i)
         y++, i <<= 1;
     while (i < max && !(b & i))
@@ -130,15 +133,15 @@ int main (int argc, char ** argv)
         exit(1);
     }
     length = atoi(argv[1]);
-    unsigned int b = 0;
+    unsigned long b = 0;
     for(;;) {
-        printf("%4d: ", inverse(b));
+        printf("%4lU: ", inverse(b));
         output(compute(inverse(b)));
         if (b == (1 << length) - 1) break;
         b = next(b);
     }
     for (b = 0; b < 1 << length; b++) {
-        printf("%4d: ", inverse(compute(b)));
+        printf("%4lU: ", inverse(compute(b)));
         output(compute(b));
     }
     return 0;
